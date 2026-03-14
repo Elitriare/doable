@@ -1,0 +1,19 @@
+@import "tailwindcss";
+
+@theme inline {
+  --font-sans: var(--font-inter);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background: #0a0a0a;
+  color: #ededed;
+  min-height: 100dvh;
+}
+
+::selection {
+  background: rgba(139, 92, 246, 0.3);
+}

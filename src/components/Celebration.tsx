@@ -1,0 +1,115 @@
+"use client";
+
+import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
+import { getRandomReward } from "@/lib/storage";
+
+interface CelebrationProps {
+  taskTitle: string;
+  onNewTask: () => void;
+}
+
+function ConfettiPiece({ delay }: { delay: number }) {
+  const colors = ["#8b5cf6", "#d946ef", "#f59e0b", "#10b981", "#3b82f6"];
+  const color = colors[Math.floor(Math.random() * colors.length)];
+  const left = Math.random() * 100;
+  const size = Math.random() * 8 + 4;
+
+  return (
+    <motion.div
+      className="absolute rounded-sm"
+      style={{
+        left: `${left}%`,
+        top: -10,
+        width: size,
+        height: size,
+        backgroundColor: color,
+      }}
+      initial={{ y: -10, opacity: 1, rotate: 0 }}
+      animate={{
+        y: 600,
+        opacity: 0,
+        rotate: Math.random() * 720 - 360,
+        x: Math.random() * 200 - 100,
+      }}
+      transition={{
+        duration: 2 + Math.random(),
+        delay: delay,
+        ease: "easeOut",
+      }}
+    />
+  );
+}
+
+export default function Celebration({ taskTitle, onNewTask }: CelebrationProps) {
+  const [reward, setReward] = useState("");
+
+  useEffect(() => {
+    setReward(getRandomReward());
+  }, []);
+
+  return (
+    <div className="relative w-full max-w-lg mx-auto text-center overflow-hidden">
+      {/* Confetti */}
+      <div className="absolute inset-0 pointer-events-none">
+        {Array.from({ length: 40 }).map((_, i) => (
+          <ConfettiPiece key={i} delay={i * 0.05} />
+        ))}
+      </div>
+
+      <motion.div
+        initial={{ scale: 0 }}
+        animate={{ scale: 1 }}
+        transition={{ type: "spring", duration: 0.6 }}
+      >
+        <div className="text-7xl mb-6">🎉</div>
+      </motion.div>
+
+      <motion.h2
+        className="text-3xl font-bold mb-2"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
+      >
+        You did it!
+      </motion.h2>
+
+      <motion.p
+        className="text-gray-400 mb-8"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.5 }}
+      >
+        &ldquo;{taskTitle}&rdquo; — crushed it.
+      </motion.p>
+
+      {reward && (
+        <motion.div
+          className="bg-gray-900 border border-gray-800 rounded-2xl p-6 mb-8"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.7 }}
+        >
+          <div className="text-sm text-fuchsia-400 font-medium mb-2">
+            YOUR REWARD
+          </div>
+          <div className="text-lg font-semibold text-white">{reward}</div>
+        </motion.div>
+      )}
+
+      <motion.button
+        onClick={onNewTask}
+        className="py-4 px-8 rounded-2xl font-bold cursor-pointer
+                   bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white
+                   hover:from-violet-600 hover:to-fuchsia-600 transition-all"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 1 }}
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+      >
+        Tackle Another Task
+      </motion.button>
+    </div>
+  );
+}
