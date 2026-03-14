@@ -1,6 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
+import ProofUpload from "./ProofUpload";
 
 interface StepCardProps {
   step: string;
@@ -10,8 +11,6 @@ interface StepCardProps {
 }
 
 export default function StepCard({ step, stepNumber, totalSteps, onDone }: StepCardProps) {
-  const isLast = stepNumber === totalSteps;
-
   return (
     <AnimatePresence mode="wait">
       <motion.div
@@ -29,16 +28,12 @@ export default function StepCard({ step, stepNumber, totalSteps, onDone }: StepC
           <p className="text-xl font-semibold text-white mb-8 leading-relaxed">
             {step}
           </p>
-          <motion.button
-            onClick={onDone}
-            className="w-full py-4 rounded-2xl font-bold text-lg cursor-pointer
-                       bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white
-                       hover:from-violet-600 hover:to-fuchsia-600 transition-all"
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            {isLast ? "Finish!" : "Done — Next Step"}
-          </motion.button>
+          <div className="text-left">
+            <ProofUpload
+              step={step}
+              onComplete={() => onDone()}
+            />
+          </div>
         </div>
       </motion.div>
     </AnimatePresence>
