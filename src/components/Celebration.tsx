@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { getRandomReward } from "@/lib/storage";
 
 interface CelebrationProps {
@@ -9,11 +9,14 @@ interface CelebrationProps {
   onNewTask: () => void;
 }
 
-function ConfettiPiece({ delay }: { delay: number }) {
+function ConfettiPiece({ index, delay }: { index: number; delay: number }) {
   const colors = ["#8b5cf6", "#d946ef", "#f59e0b", "#10b981", "#3b82f6"];
-  const color = colors[Math.floor(Math.random() * colors.length)];
-  const left = Math.random() * 100;
-  const size = Math.random() * 8 + 4;
+  const color = colors[index % colors.length];
+  const left = (index * 17) % 100;
+  const size = 4 + (index % 8);
+  const rotate = ((index * 37) % 720) - 360;
+  const x = ((index * 43) % 200) - 100;
+  const duration = 2 + (index % 8) * 0.1;
 
   return (
     <motion.div
@@ -29,12 +32,12 @@ function ConfettiPiece({ delay }: { delay: number }) {
       animate={{
         y: 600,
         opacity: 0,
-        rotate: Math.random() * 720 - 360,
-        x: Math.random() * 200 - 100,
+        rotate,
+        x,
       }}
       transition={{
-        duration: 2 + Math.random(),
-        delay: delay,
+        duration,
+        delay,
         ease: "easeOut",
       }}
     />
@@ -42,18 +45,14 @@ function ConfettiPiece({ delay }: { delay: number }) {
 }
 
 export default function Celebration({ taskTitle, onNewTask }: CelebrationProps) {
-  const [reward, setReward] = useState("");
-
-  useEffect(() => {
-    setReward(getRandomReward());
-  }, []);
+  const [reward] = useState(() => getRandomReward());
 
   return (
     <div className="relative w-full max-w-lg mx-auto text-center overflow-hidden">
       {/* Confetti */}
       <div className="absolute inset-0 pointer-events-none">
         {Array.from({ length: 40 }).map((_, i) => (
-          <ConfettiPiece key={i} delay={i * 0.05} />
+          <ConfettiPiece key={i} index={i} delay={i * 0.05} />
         ))}
       </div>
 

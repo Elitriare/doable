@@ -28,6 +28,12 @@ export interface Task {
   createdAt: number;
 }
 
+export interface ScheduledReminder {
+  id: string;
+  taskTitle: string;
+  triggerAt: number;
+}
+
 export interface UserProfile {
   rewards: string[];
 }
