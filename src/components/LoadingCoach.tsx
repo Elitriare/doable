@@ -9,6 +9,8 @@ const messages = [
 ];
 
 export default function LoadingCoach() {
+  const message = messages[0];
+
   return (
     <div className="w-full max-w-lg mx-auto text-center">
       <motion.div
@@ -21,7 +23,7 @@ export default function LoadingCoach() {
         animate={{ opacity: [1, 0.5, 1] }}
         transition={{ duration: 2, repeat: Infinity }}
       >
-        {messages[Math.floor(Math.random() * messages.length)]}
+        {message}
       </motion.p>
     </div>
   );
