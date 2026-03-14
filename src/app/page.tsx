@@ -1,14 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { AppScreen, BlockerType, Task } from "@/types";
 import { saveTask } from "@/lib/storage";
+import {
+  registerServiceWorker,
+  requestNotificationPermission,
+  scheduleComebackNotification,
+  cancelComebackNotification,
+} from "@/lib/notifications";
 import TaskInput from "@/components/TaskInput";
 import BlockerSelect from "@/components/BlockerSelect";
 import StepCard from "@/components/StepCard";
 import ProgressBar from "@/components/ProgressBar";
 import Celebration from "@/components/Celebration";
 import LoadingCoach from "@/components/LoadingCoach";
+import ScheduleReminder from "@/components/ScheduleReminder";
 
 export default function Home() {
   const [screen, setScreen] = useState<AppScreen>("home");
@@ -16,6 +23,26 @@ export default function Home() {
   const [taskTitle, setTaskTitle] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  // Register service worker and request notification permission on mount
+  useEffect(() => {
+    registerServiceWorker().then(() => requestNotificationPermission());
+  }, []);
+
+  // Schedule comeback notification when user leaves mid-session
+  const handleVisibilityChange = useCallback(() => {
+    if (document.hidden && screen === "coaching" && currentTask && !currentTask.completed) {
+      const progress = `${Math.round((currentTask.currentStep / currentTask.steps.length) * 100)}%`;
+      scheduleComebackNotification(currentTask.title, progress);
+    } else if (!document.hidden) {
+      cancelComebackNotification();
+    }
+  }, [screen, currentTask]);
+
+  useEffect(() => {
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
+  }, [handleVisibilityChange]);
 
   const handleTaskSubmit = (task: string) => {
     setTaskTitle(task);
@@ -89,6 +116,7 @@ export default function Home() {
   };
 
   const handleNewTask = () => {
+    cancelComebackNotification();
     setCurrentTask(null);
     setTaskTitle("");
     setError("");
@@ -103,7 +131,12 @@ export default function Home() {
         </div>
       )}
 
-      {screen === "home" && <TaskInput onSubmit={handleTaskSubmit} />}
+      {screen === "home" && (
+        <>
+          <TaskInput onSubmit={handleTaskSubmit} />
+          <ScheduleReminder />
+        </>
+      )}
 
       {screen === "blocker" && <BlockerSelect onSelect={handleBlockerSelect} />}
 
