@@ -23,7 +23,7 @@ export default function StepCard({ step, stepNumber, totalSteps, onDone }: StepC
         className="w-full max-w-lg mx-auto"
       >
         <div className="bg-gray-900 border border-gray-800 rounded-3xl p-8 text-center">
-          <div className="text-sm text-violet-400 font-medium mb-4">
+          <div className="text-sm text-blue-400 font-medium mb-4">
             FOCUS ON THIS
           </div>
           <p className="text-xl font-semibold text-white mb-8 leading-relaxed">

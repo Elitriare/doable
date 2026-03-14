@@ -14,7 +14,7 @@ export default function LoadingCoach() {
       <motion.div
         animate={{ rotate: 360 }}
         transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-        className="w-12 h-12 mx-auto mb-6 rounded-full border-4 border-gray-800 border-t-violet-500"
+        className="w-12 h-12 mx-auto mb-6 rounded-full border-4 border-gray-800 border-t-blue-500"
       />
       <motion.p
         className="text-gray-400 text-lg"

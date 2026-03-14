@@ -24,12 +24,15 @@ export default function TaskInput({ onSubmit }: TaskInputProps) {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-violet-400 to-fuchsia-400 bg-clip-text text-transparent">
+        <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-blue-500 bg-clip-text text-transparent">
           doable
         </h1>
-        <p className="text-gray-400 mb-10 text-lg">
+        <p className="text-white mb-10 text-lg">
           Turn overwhelming tasks into doable steps
         </p>
+        <div id="image" style={{textAlign:"center"}}>
+        <img src="/images/B4.png" style={{width: "300px", height: "auto", display: "inline-block", marginRight: "10px"}}></img>
+        </div>
       </motion.div>
 
       <motion.form
@@ -43,8 +46,8 @@ export default function TaskInput({ onSubmit }: TaskInputProps) {
           value={task}
           onChange={(e) => setTask(e.target.value)}
           placeholder="What do you need to get done?"
-          className="w-full p-4 rounded-2xl bg-gray-900 border border-gray-800 text-white
-                     placeholder-gray-500 text-lg focus:outline-none focus:border-violet-500
+          className="w-full p-4 rounded-2xl bg-gray-100 border border-gray-200 text-black
+                     placeholder-gray-500 text-lg focus:outline-none focus:border-white-500
                      transition-colors"
           autoFocus
         />

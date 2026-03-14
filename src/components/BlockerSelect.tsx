@@ -31,7 +31,7 @@ export default function BlockerSelect({ onSelect }: BlockerSelectProps) {
           <motion.button
             key={option.id}
             onClick={() => onSelect(option.id)}
-            className="w-full p-4 rounded-2xl bg-gray-900 border border-gray-800 hover:border-violet-500
+            className="w-full p-4 rounded-2xl bg-blue-900 border border-white hover:border-violet-500
                        text-left transition-colors cursor-pointer flex items-center gap-4"
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -39,10 +39,10 @@ export default function BlockerSelect({ onSelect }: BlockerSelectProps) {
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
           >
-            <span className="text-3xl">{option.emoji}</span>
+            <img className="w-18 h-18" src={option.image}></img>
             <div>
               <div className="font-semibold text-white">{option.label}</div>
-              <div className="text-sm text-gray-400">{option.description}</div>
+              <div className="text-sm text-white">{option.description}</div>
             </div>
           </motion.button>
         ))}
