@@ -17,6 +17,8 @@ import Celebration from "@/components/Celebration";
 import LoadingCoach from "@/components/LoadingCoach";
 import ScheduleReminder from "@/components/ScheduleReminder";
 import JournalDrawer from "@/components/JournalDrawer";
+import CalendarSync from "@/components/CalendarSync";
+import CalendarEvents from "@/components/CalendarEvents";
 
 export default function Home() {
   const [screen, setScreen] = useState<AppScreen>("home");
@@ -48,6 +50,11 @@ export default function Home() {
     setScreen("blocker");
   };
 
+  const handleCalendarImport = (title: string) => {
+    setTaskTitle(title);
+    setScreen("blocker");
+  };
+
   const handleBlockerSelect = async (blocker: BlockerType) => {
     setLoading(true);
     setError("");
@@ -76,6 +83,7 @@ export default function Home() {
         completed: false,
         createdAt: Date.now(),
         journal: [],
+        calendarEventIds: [],
       };
 
       setCurrentTask(task);
@@ -118,6 +126,20 @@ export default function Home() {
 
   const handleNewTask = () => {
     cancelComebackNotification();
+
+    // delete calendar events if task was abandoned mid-way
+    if (
+      currentTask &&
+      !currentTask.completed &&
+      currentTask.calendarEventIds?.length
+    ) {
+      fetch("/api/calendar/delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ eventIds: currentTask.calendarEventIds }),
+      });
+    }
+
     setCurrentTask(null);
     setTaskTitle("");
     setError("");
@@ -137,6 +159,7 @@ export default function Home() {
       {screen === "home" && (
         <>
           <TaskInput onSubmit={handleTaskSubmit} />
+          <CalendarEvents onImport={handleCalendarImport} />
           <ScheduleReminder />
         </>
       )}
@@ -158,13 +181,23 @@ export default function Home() {
             totalSteps={currentTask.steps.length}
             onDone={handleStepDone}
           />
+          <CalendarSync
+            taskTitle={currentTask.title}
+            steps={currentTask.steps}
+            existingEventIds={currentTask.calendarEventIds}
+            onEventIdsCreated={(ids) => {
+              const updated = { ...currentTask, calendarEventIds: ids };
+              setCurrentTask(updated);
+              saveTask(updated);
+            }}
+          />
           <button
             onClick={handleNewTask}
             className="block mx-auto text-sm text-gray-500 hover:text-gray-300 transition-colors cursor-pointer"
           >
             Start over
           </button>
-          <JournalDrawer entries={currentTask.journal} />  {/* 👈 add this */}
+          <JournalDrawer entries={currentTask.journal} />
         </div>
       )}
 

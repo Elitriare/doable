@@ -12,14 +12,12 @@ export interface BlockerOption {
   description: string;
 }
 
-// Updated step shape from AI breakdown
 export interface Step {
   step: string;
   journalPrompt: string;
   estimatedMinutes: number;
 }
 
-// Journal entry saved after each step
 export interface JournalEntryData {
   stepIndex: number;
   stepText: string;
@@ -44,6 +42,7 @@ export interface Task {
   completed: boolean;
   createdAt: number;
   journal: JournalEntryData[];
+  calendarEventIds?: string[]; // one per step, in order
 }
 
 export interface ScheduledReminder {
