@@ -57,8 +57,21 @@ export interface ScheduledReminder {
   triggerAt: number;
 }
 
+export interface PointEvent {
+  delta: number;
+  reason: "step_complete" | "task_complete" | "streak_bonus" | "first_today" | "forfeit";
+  taskTitle: string;
+  timestamp: number;
+}
+
 export interface UserProfile {
   rewards: string[];
+  points: number;
+  friendCode: string;
+  displayName: string;
+  avatarUrl?: string;
+  friends: string[]; // array of friend userEmails
+  pointsHistory: PointEvent[];
 }
 
 export type AppScreen =
@@ -68,4 +81,4 @@ export type AppScreen =
   | "complete"
   | "journey";
 
-export type AppTab = "coach" | "calendar" | "analytics";
+export type AppTab = "coach" | "calendar" | "compete" | "analytics";

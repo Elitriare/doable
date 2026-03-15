@@ -86,3 +86,30 @@ export function scheduleTaskNotification(id: string, title: string, triggerAt: n
   scheduledTimers.set(id, timer);
 }
 
+// Schedule a streak-loss warning notification for 8pm if user hasn't completed a task today
+let streakTimer: ReturnType<typeof setTimeout> | null = null;
+
+export function scheduleStreakWarning(currentStreak: number): void {
+  if (typeof window === "undefined" || !("Notification" in window)) return;
+  if (Notification.permission !== "granted" || currentStreak < 2) return;
+  if (streakTimer) clearTimeout(streakTimer);
+
+  const now = new Date();
+  const eightPm = new Date(now);
+  eightPm.setHours(20, 0, 0, 0);
+
+  // If it's already past 8pm, don't schedule
+  if (now >= eightPm) return;
+
+  const delay = eightPm.getTime() - now.getTime();
+
+  streakTimer = setTimeout(() => {
+    showNotification(
+      `Your ${currentStreak}-day streak is at risk!`,
+      "Complete a task before midnight to keep it going.",
+      "streak-warning"
+    );
+    streakTimer = null;
+  }, delay);
+}
+

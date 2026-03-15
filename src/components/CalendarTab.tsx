@@ -29,8 +29,16 @@ interface Props {
 export default function CalendarTab({ onImport, onResume, onForfeit }: Props) {
   const { data: session } = useSession();
   const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [localTasks, setLocalTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  // Load tasks into state so forfeits update instantly
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setLocalTasks(getTasks());
+    }
+  }, []);
 
   useEffect(() => {
     if (!session) return;
@@ -46,12 +54,18 @@ export default function CalendarTab({ onImport, onResume, onForfeit }: Props) {
       .finally(() => setLoading(false));
   }, [session]);
 
+  const handleForfeit = (task: Task) => {
+    onForfeit(task);
+    // Immediately remove from local state so UI updates without reload
+    setLocalTasks((prev) => prev.filter((t) => t.id !== task.id));
+  };
+
   // Build 7-day view
   const days: DayData[] = [];
   const now = new Date();
   const todayStr = now.toDateString();
 
-  const allTasks = typeof window !== "undefined" ? getTasks() : [];
+  const allTasks = localTasks;
 
   for (let i = 0; i < 7; i++) {
     const date = new Date(now);
@@ -208,7 +222,7 @@ export default function CalendarTab({ onImport, onResume, onForfeit }: Props) {
                             <button
                               onClick={() => {
                                 if (confirm(`Forfeit "${task.title}"? This can't be undone.`)) {
-                                  onForfeit(task);
+                                  handleForfeit(task);
                                 }
                               }}
                               className="text-xs py-1.5 px-2.5 rounded-xl font-medium text-red-400 hover:text-red-600 hover:bg-red-50 transition-all cursor-pointer"

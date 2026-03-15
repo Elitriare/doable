@@ -3,12 +3,24 @@
 import { useState, useEffect, useCallback } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { AppScreen, AppTab, BlockerType, Task, Step, JournalEntryData } from "@/types";
-import { saveTask, deleteTask, getActiveTask, pullTasksFromDb, pushAllTasksToDb } from "@/lib/storage";
+import {
+  saveTask,
+  deleteTask,
+  getActiveTask,
+  pullTasksFromDb,
+  pushAllTasksToDb,
+  pullProfileFromDb,
+  awardPoints,
+  getStreak,
+  isFirstTaskToday,
+  getPoints,
+} from "@/lib/storage";
 import {
   registerServiceWorker,
   requestNotificationPermission,
   scheduleComebackNotification,
   cancelComebackNotification,
+  scheduleStreakWarning,
 } from "@/lib/notifications";
 import TaskInput from "@/components/TaskInput";
 import BlockerSelect from "@/components/BlockerSelect";
@@ -23,6 +35,8 @@ import SpotifyPlayer from "@/components/SpotifyPlayer";
 import CalendarSync from "@/components/CalendarSync";
 import CalendarEvents from "@/components/CalendarEvents";
 import CalendarTab from "@/components/CalendarTab";
+import Leaderboard from "@/components/Leaderboard";
+import PointsToast from "@/components/PointsToast";
 import LoginScreen from "@/components/LoginScreen";
 
 export default function Home() {
@@ -33,6 +47,11 @@ export default function Home() {
   const [taskTitle, setTaskTitle] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  // Points toast state
+  const [toastPoints, setToastPoints] = useState<number | null>(null);
+  // Track points earned during current task session for celebration screen
+  const [sessionPoints, setSessionPoints] = useState(0);
 
   // Restore active session on mount + sync with DB when logged in
   useEffect(() => {
@@ -48,12 +67,20 @@ export default function Home() {
       await pushAllTasksToDb();
       // Pull merged tasks from DB
       await pullTasksFromDb();
+      // Pull profile (points, friendCode, etc.)
+      await pullProfileFromDb();
       // Restore active task
       const active = getActiveTask();
       if (active) {
         setCurrentTask(active);
         setTaskTitle(active.title);
         setScreen("coaching");
+      }
+
+      // Schedule streak warning if user has a streak going
+      const streak = getStreak();
+      if (streak >= 2 && isFirstTaskToday()) {
+        scheduleStreakWarning(streak);
       }
     };
 
@@ -74,6 +101,13 @@ export default function Home() {
     return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
   }, [handleVisibilityChange]);
 
+  // Helper: award points and show toast
+  const award = (delta: number, reason: Parameters<typeof awardPoints>[1], title: string) => {
+    awardPoints(delta, reason, title);
+    setToastPoints((prev) => (prev ?? 0) + delta);
+    setSessionPoints((prev) => prev + delta);
+  };
+
   const handleTaskSubmit = (task: string) => {
     setTaskTitle(task);
     setScreen("blocker");
@@ -88,6 +122,7 @@ export default function Home() {
     setLoading(true);
     setError("");
     setScreen("coaching");
+    setSessionPoints(0); // Reset session points for new task
 
     try {
       const res = await fetch("/api/breakdown", {
@@ -154,7 +189,25 @@ export default function Home() {
     setCurrentTask(updatedTask);
     saveTask(updatedTask);
 
+    // Award step points
+    award(10, "step_complete", currentTask.title);
+
     if (isLast) {
+      // Task completion bonus
+      award(25, "task_complete", currentTask.title);
+
+      // Streak bonus (capped at +50)
+      const streak = getStreak();
+      if (streak > 0) {
+        const streakBonus = Math.min(streak * 5, 50);
+        award(streakBonus, "streak_bonus", currentTask.title);
+      }
+
+      // First task of the day bonus
+      if (isFirstTaskToday()) {
+        award(10, "first_today", currentTask.title);
+      }
+
       setScreen("complete");
     }
   };
@@ -178,12 +231,14 @@ export default function Home() {
     setCurrentTask(null);
     setTaskTitle("");
     setError("");
+    setSessionPoints(0);
     setScreen("home");
   };
 
   const handleResumeTask = (task: Task) => {
     setCurrentTask(task);
     setTaskTitle(task.title);
+    setSessionPoints(0);
     setActiveTab("coach");
     setScreen("coaching");
   };
@@ -198,6 +253,11 @@ export default function Home() {
       });
     }
     deleteTask(task.id);
+
+    // Deduct points for forfeit
+    awardPoints(-15, "forfeit", task.title);
+    setToastPoints(-15);
+
     // If this was the active task, clear it
     if (currentTask?.id === task.id) {
       setCurrentTask(null);
@@ -227,6 +287,9 @@ export default function Home() {
 
   return (
     <div className="min-h-screen flex flex-col">
+      {/* Points Toast */}
+      <PointsToast points={toastPoints} onDone={() => setToastPoints(null)} />
+
       {/* Tab Navigation */}
       {showTabs && (
         <nav className="flex items-center justify-between pt-6 pb-2 px-4">
@@ -234,7 +297,7 @@ export default function Home() {
           <div className="flex gap-1">
             <button
               onClick={() => setActiveTab("coach")}
-              className={`px-6 py-2 rounded-full text-sm font-semibold transition-all cursor-pointer ${
+              className={`px-4 py-2 rounded-full text-sm font-semibold transition-all cursor-pointer ${
                 activeTab === "coach"
                   ? "bg-[#4a8fe7] text-white shadow-md"
                   : "bg-white/50 text-[#5a7fa8] hover:bg-white/70"
@@ -244,7 +307,7 @@ export default function Home() {
             </button>
             <button
               onClick={() => setActiveTab("calendar")}
-              className={`px-6 py-2 rounded-full text-sm font-semibold transition-all cursor-pointer ${
+              className={`px-4 py-2 rounded-full text-sm font-semibold transition-all cursor-pointer ${
                 activeTab === "calendar"
                   ? "bg-[#4a8fe7] text-white shadow-md"
                   : "bg-white/50 text-[#5a7fa8] hover:bg-white/70"
@@ -253,8 +316,18 @@ export default function Home() {
               Calendar
             </button>
             <button
+              onClick={() => setActiveTab("compete")}
+              className={`px-4 py-2 rounded-full text-sm font-semibold transition-all cursor-pointer ${
+                activeTab === "compete"
+                  ? "bg-[#4a8fe7] text-white shadow-md"
+                  : "bg-white/50 text-[#5a7fa8] hover:bg-white/70"
+              }`}
+            >
+              Compete
+            </button>
+            <button
               onClick={() => setActiveTab("analytics")}
-              className={`px-6 py-2 rounded-full text-sm font-semibold transition-all cursor-pointer ${
+              className={`px-4 py-2 rounded-full text-sm font-semibold transition-all cursor-pointer ${
                 activeTab === "analytics"
                   ? "bg-[#4a8fe7] text-white shadow-md"
                   : "bg-white/50 text-[#5a7fa8] hover:bg-white/70"
@@ -287,6 +360,8 @@ export default function Home() {
             onForfeit={handleForfeitTask}
           />
         )}
+
+        {activeTab === "compete" && screen === "home" && <Leaderboard />}
 
         {activeTab === "analytics" && screen === "home" && <Analytics />}
 
@@ -327,7 +402,11 @@ export default function Home() {
             )}
 
             {screen === "complete" && currentTask && (
-              <Celebration taskTitle={currentTask.title} onNewTask={handleNewTask} />
+              <Celebration
+                taskTitle={currentTask.title}
+                onNewTask={handleNewTask}
+                pointsEarned={sessionPoints}
+              />
             )}
           </>
         )}

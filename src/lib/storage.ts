@@ -1,4 +1,4 @@
-import { Task, UserProfile } from "@/types";
+import { Task, UserProfile, PointEvent } from "@/types";
 import { DEFAULT_REWARDS } from "./constants";
 
 const TASKS_KEY = "doable_tasks";
@@ -24,16 +24,65 @@ export function saveTask(task: Task): void {
   syncTaskToDb(task);
 }
 
+const DEFAULT_PROFILE: UserProfile = {
+  rewards: DEFAULT_REWARDS,
+  points: 0,
+  friendCode: "",
+  displayName: "",
+  friends: [],
+  pointsHistory: [],
+};
+
 export function getProfile(): UserProfile {
-  if (typeof window === "undefined") return { rewards: DEFAULT_REWARDS };
+  if (typeof window === "undefined") return DEFAULT_PROFILE;
   const data = localStorage.getItem(PROFILE_KEY);
-  return data ? JSON.parse(data) : { rewards: DEFAULT_REWARDS };
+  if (!data) return DEFAULT_PROFILE;
+  const parsed = JSON.parse(data);
+  // Backfill missing fields
+  return { ...DEFAULT_PROFILE, ...parsed };
 }
 
 export function saveProfile(profile: UserProfile): void {
   localStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
   // Fire-and-forget sync to MongoDB
   syncProfileToDb(profile);
+}
+
+// --- Points helpers ---
+
+export function getPoints(): number {
+  return getProfile().points;
+}
+
+export function awardPoints(
+  delta: number,
+  reason: PointEvent["reason"],
+  taskTitle: string
+): number {
+  const profile = getProfile();
+  const newPoints = Math.max(0, profile.points + delta);
+  const event: PointEvent = { delta, reason, taskTitle, timestamp: Date.now() };
+
+  profile.points = newPoints;
+  profile.pointsHistory = [...(profile.pointsHistory || []).slice(-49), event];
+  localStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
+
+  // Fire-and-forget sync to DB
+  fetch("/api/points", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ delta, reason, taskTitle }),
+  }).catch(() => {});
+
+  return newPoints;
+}
+
+export function isFirstTaskToday(): boolean {
+  const completed = getCompletedTasks();
+  const today = new Date().toDateString();
+  return !completed.some(
+    (t) => t.completedAt && new Date(t.completedAt).toDateString() === today
+  );
 }
 
 // --- DB sync helpers (fire-and-forget, won't block UI) ---
@@ -74,6 +123,20 @@ export async function pullTasksFromDb(): Promise<Task[]> {
   } catch {
     return getTasks();
   }
+}
+
+// Pull profile from DB and merge with localStorage
+export async function pullProfileFromDb(): Promise<void> {
+  try {
+    const res = await fetch("/api/profile");
+    if (!res.ok) return;
+    const { profile: dbProfile } = await res.json();
+    if (!dbProfile) return;
+
+    const local = getProfile();
+    const merged = { ...DEFAULT_PROFILE, ...local, ...dbProfile };
+    localStorage.setItem(PROFILE_KEY, JSON.stringify(merged));
+  } catch {}
 }
 
 // Push all localStorage tasks to DB (first login migration)
