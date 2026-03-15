@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useSession } from "next-auth/react";
 import { AppScreen, AppTab, BlockerType, Task, Step, JournalEntryData } from "@/types";
-import { saveTask, getActiveTask } from "@/lib/storage";
+import { saveTask, getActiveTask, pullTasksFromDb, pushAllTasksToDb } from "@/lib/storage";
 import {
   registerServiceWorker,
   requestNotificationPermission,
@@ -21,8 +22,10 @@ import Analytics from "@/components/Analytics";
 import SpotifyPlayer from "@/components/SpotifyPlayer";
 import CalendarSync from "@/components/CalendarSync";
 import CalendarEvents from "@/components/CalendarEvents";
+import LoginScreen from "@/components/LoginScreen";
 
 export default function Home() {
+  const { data: session, status: authStatus } = useSession();
   const [screen, setScreen] = useState<AppScreen>("home");
   const [activeTab, setActiveTab] = useState<AppTab>("coach");
   const [currentTask, setCurrentTask] = useState<Task | null>(null);
@@ -30,17 +33,31 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // Restore active session on mount (survives page reload)
+  // Restore active session on mount + sync with DB when logged in
   useEffect(() => {
     registerServiceWorker().then(() => requestNotificationPermission());
-
-    const active = getActiveTask();
-    if (active) {
-      setCurrentTask(active);
-      setTaskTitle(active.title);
-      setScreen("coaching");
-    }
   }, []);
+
+  // Sync with MongoDB when session becomes available
+  useEffect(() => {
+    if (authStatus !== "authenticated") return;
+
+    const syncAndRestore = async () => {
+      // Push any local tasks to DB (migration for first login)
+      await pushAllTasksToDb();
+      // Pull merged tasks from DB
+      await pullTasksFromDb();
+      // Restore active task
+      const active = getActiveTask();
+      if (active) {
+        setCurrentTask(active);
+        setTaskTitle(active.title);
+        setScreen("coaching");
+      }
+    };
+
+    syncAndRestore();
+  }, [authStatus]);
 
   const handleVisibilityChange = useCallback(() => {
     if (document.hidden && screen === "coaching" && currentTask && !currentTask.completed) {
@@ -167,6 +184,20 @@ export default function Home() {
 
   // During active coaching, hide the tab bar
   const showTabs = screen === "home" || (screen === "coaching" && !currentTask);
+
+  // Auth loading state
+  if (authStatus === "loading") {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="w-10 h-10 border-2 border-[#4a8fe7] border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  // Not logged in — show login screen
+  if (!session) {
+    return <LoginScreen />;
+  }
 
   return (
     <div className="min-h-screen flex flex-col">

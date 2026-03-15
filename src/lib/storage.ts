@@ -19,6 +19,9 @@ export function saveTask(task: Task): void {
     tasks.push(task);
   }
   localStorage.setItem(TASKS_KEY, JSON.stringify(tasks));
+
+  // Fire-and-forget sync to MongoDB if logged in
+  syncTaskToDb(task);
 }
 
 export function getProfile(): UserProfile {
@@ -29,6 +32,61 @@ export function getProfile(): UserProfile {
 
 export function saveProfile(profile: UserProfile): void {
   localStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
+  // Fire-and-forget sync to MongoDB
+  syncProfileToDb(profile);
+}
+
+// --- DB sync helpers (fire-and-forget, won't block UI) ---
+
+function syncTaskToDb(task: Task): void {
+  fetch("/api/tasks", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ task }),
+  }).catch(() => {}); // silently fail if not logged in or network error
+}
+
+function syncProfileToDb(profile: UserProfile): void {
+  fetch("/api/profile", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ profile }),
+  }).catch(() => {});
+}
+
+// Pull all tasks from DB and merge with localStorage (DB wins on conflicts)
+export async function pullTasksFromDb(): Promise<Task[]> {
+  try {
+    const res = await fetch("/api/tasks");
+    if (!res.ok) return getTasks();
+    const { tasks: dbTasks } = await res.json();
+
+    if (!dbTasks || dbTasks.length === 0) return getTasks();
+
+    // Merge: DB tasks take priority, keep any local-only tasks
+    const localTasks = getTasks();
+    const dbTaskIds = new Set(dbTasks.map((t: Task) => t.id));
+    const localOnly = localTasks.filter((t) => !dbTaskIds.has(t.id));
+    const merged = [...dbTasks, ...localOnly];
+
+    localStorage.setItem(TASKS_KEY, JSON.stringify(merged));
+    return merged;
+  } catch {
+    return getTasks();
+  }
+}
+
+// Push all localStorage tasks to DB (first login migration)
+export async function pushAllTasksToDb(): Promise<void> {
+  const tasks = getTasks();
+  if (tasks.length === 0) return;
+  try {
+    await fetch("/api/tasks", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ tasks }),
+    });
+  } catch {}
 }
 
 export function getRandomReward(): string {
