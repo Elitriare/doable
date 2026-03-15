@@ -18,9 +18,9 @@ export default function ProgressBar({ current, total }: ProgressBarProps) {
         </span>
         <span>{Math.round(percentage)}%</span>
       </div>
-      <div className="w-full h-3 bg-gray-800 rounded-full overflow-hidden">
+      <div className="w-full h-3 bg-white rounded-full overflow-hidden">
         <motion.div
-          className="h-full rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500"
+          className="h-full rounded-full bg-gradient-to-r from-blue-200 to-blue-500"
           initial={{ width: 0 }}
           animate={{ width: `${percentage}%` }}
           transition={{ duration: 0.5, ease: "easeOut" }}

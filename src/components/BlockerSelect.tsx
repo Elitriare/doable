@@ -6,13 +6,13 @@ import { BLOCKER_OPTIONS } from "@/lib/constants";
 import { BlockerType } from "@/types";
 
 const EXTRA_OPTIONS = [
-  { id: "no-time", label: "I don't have enough time", emoji: "⏳", description: "Too much on my plate and not enough hours in the day" },
-  { id: "waiting-on-others", label: "I'm waiting on someone else", emoji: "🤝", description: "I'm blocked by another person and can't move forward alone" },
-  { id: "unclear-goal", label: "The goal isn't clear", emoji: "🌫️", description: "I'm not sure what done actually looks like" },
-  { id: "perfectionism", label: "I want it to be perfect", emoji: "✨", description: "I keep putting it off because I want to do it perfectly" },
-  { id: "distracted", label: "I keep getting distracted", emoji: "📱", description: "Something always pulls my attention away before I can focus" },
-  { id: "no-resources", label: "I'm missing tools or resources", emoji: "🧰", description: "I don't have what I need to get started or finish" },
-  { id: "burnt-out", label: "I'm burnt out", emoji: "🔥", description: "I've been pushing hard and have nothing left in the tank" },
+  { id: "no-time", label: "I don't have enough time", image: "/images/outoftime.png", description: "Too much on my plate and not enough hours in the day" },
+  { id: "waiting-on-others", label: "I'm waiting on someone else", image: "/images/waiting.png", description: "I'm blocked by another person and can't move forward alone" },
+  { id: "unclear-goal", label: "The goal isn't clear", image: "/images/notclear.png", description: "I'm not sure what done actually looks like" },
+  { id: "perfectionism", label: "I want it to be perfect", image: "/images/perfect.png", description: "I keep putting it off because I want to do it perfectly" },
+  { id: "distracted", label: "I keep getting distracted", image: "/images/distracted.png", description: "Something always pulls my attention away before I can focus" },
+  { id: "no-resources", label: "I'm missing tools or resources", image: "/images/missing.png", description: "I don't have what I need to get started or finish" },
+  { id: "burnt-out", label: "I'm burnt out", image: "/images/burnout.png", description: "I've been pushing hard and have nothing left in the tank" },
 ];
 
 interface BlockerSelectProps {
@@ -47,8 +47,9 @@ export default function BlockerSelect({ onSelect }: BlockerSelectProps) {
         {allOptions.map((option, index) => (
           <motion.button
             key={option.id}
+
             onClick={() => onSelect(option.id as BlockerType)}
-            className="w-full p-4 rounded-2xl bg-gray-900 border border-gray-800 hover:border-violet-500
+            className="w-full p-4 rounded-2xl bg-blue-900 border border-white hover:border-violet-500
                        text-left transition-colors cursor-pointer flex items-center gap-4"
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -56,10 +57,10 @@ export default function BlockerSelect({ onSelect }: BlockerSelectProps) {
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
           >
-            <span className="text-3xl">{option.emoji}</span>
+            <img className="w-18 h-18" src={option.image}></img>
             <div>
               <div className="font-semibold text-white">{option.label}</div>
-              <div className="text-sm text-gray-400">{option.description}</div>
+              <div className="text-sm text-white">{option.description}</div>
             </div>
           </motion.button>
         ))}
@@ -74,8 +75,8 @@ export default function BlockerSelect({ onSelect }: BlockerSelectProps) {
             onClick={() => setShowCustom((v) => !v)}
             className={`w-full p-4 rounded-2xl border text-left transition-colors cursor-pointer flex items-center gap-4
               ${showCustom
-                ? "bg-violet-900/40 border-violet-500"
-                : "bg-gray-900 border-gray-800 hover:border-violet-500"
+                ? "bg-blue-900 border-white"
+                : "bg-blue-900 border-white hover:border-violet-500"
               }`}
           >
             <span className="text-3xl">💬</span>
@@ -101,7 +102,7 @@ export default function BlockerSelect({ onSelect }: BlockerSelectProps) {
                     onChange={(e) => setCustomReason(e.target.value)}
                     placeholder="Describe what's making this task difficult for you..."
                     rows={3}
-                    className="w-full p-3 rounded-xl bg-gray-800 border border-gray-700 text-white text-sm
+                    className="w-full p-3 rounded-xl bg-white border border-gray-700 text-black text-sm
                                placeholder-gray-500 focus:outline-none focus:border-violet-500 resize-none"
                   />
                   <motion.button

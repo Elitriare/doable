@@ -8,7 +8,7 @@ export type BlockerType =
 export interface BlockerOption {
   id: BlockerType;
   label: string;
-  emoji: string;
+  image: string;
   description: string;
 }
 

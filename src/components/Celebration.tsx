@@ -61,11 +61,13 @@ export default function Celebration({ taskTitle, onNewTask }: CelebrationProps) 
         animate={{ scale: 1 }}
         transition={{ type: "spring", duration: 0.6 }}
       >
-        <div className="text-7xl mb-6">🎉</div>
+        <div className="text-7xl mb-6" style={{textAlign:"center"}}>
+          <img src="/images/confetti.png" style={{width: "370px", height: "auto", display: "inline-block", marginLeft: "10px"}}></img>
+        </div>
       </motion.div>
 
       <motion.h2
-        className="text-3xl font-bold mb-2"
+        className="text-3xl font-bold mb-2 text-blue-400"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
@@ -84,23 +86,23 @@ export default function Celebration({ taskTitle, onNewTask }: CelebrationProps) 
 
       {reward && (
         <motion.div
-          className="bg-gray-900 border border-gray-800 rounded-2xl p-6 mb-8"
+          className="bg-[#fce7bd] border border-white rounded-2xl p-6 mb-8"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.7 }}
         >
-          <div className="text-sm text-fuchsia-400 font-medium mb-2">
+          <div className="text-sm text-[#65b5f7] font-medium mb-2">
             YOUR REWARD
           </div>
-          <div className="text-lg font-semibold text-white">{reward}</div>
+          <div className="text-lg font-semibold text-[#97cffc]">{reward}</div>
         </motion.div>
       )}
 
       <motion.button
         onClick={onNewTask}
         className="py-4 px-8 rounded-2xl font-bold cursor-pointer
-                   bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white
-                   hover:from-violet-600 hover:to-fuchsia-600 transition-all"
+                   bg-gradient-to-r from-[#abd9ff] to-[#87c6fa] text-white
+                   hover:from-[#97cffc] hover:to-[#65b5f7] transition-all"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 1 }}

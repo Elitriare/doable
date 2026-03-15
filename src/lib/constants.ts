@@ -4,31 +4,31 @@ export const BLOCKER_OPTIONS: BlockerOption[] = [
   {
     id: "too-big",
     label: "It feels too big",
-    emoji: "🏔️",
+    image: "/images/toobig.png",
     description: "The task feels overwhelming and I don't know how to tackle it all",
   },
   {
     id: "too-boring",
     label: "It's too boring",
-    emoji: "😴",
+    image: "/images/boring.png",
     description: "I just can't motivate myself to do something this tedious",
   },
   {
     id: "no-idea",
     label: "I don't know where to start",
-    emoji: "🧭",
+    image: "/images/noidea.png",
     description: "I'm not sure what the first step even is",
   },
   {
     id: "fear",
     label: "I'm scared of doing it wrong",
-    emoji: "😰",
+    image: "/images/scared.png",
     description: "I'm worried about making mistakes or failing",
   },
   {
     id: "low-energy",
     label: "I have no energy",
-    emoji: "🪫",
+    image: "/images/dead.png",
     description: "I'm tired and can't seem to get going",
   },
 ];
