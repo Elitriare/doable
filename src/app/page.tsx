@@ -18,9 +18,12 @@ import {
 import {
   registerServiceWorker,
   requestNotificationPermission,
+  subscribeToPush,
   scheduleComebackNotification,
   cancelComebackNotification,
   scheduleStreakWarning,
+  startReminderPolling,
+  stopReminderPolling,
 } from "@/lib/notifications";
 import TaskInput from "@/components/TaskInput";
 import BlockerSelect from "@/components/BlockerSelect";
@@ -53,9 +56,15 @@ export default function Home() {
   // Track points earned during current task session for celebration screen
   const [sessionPoints, setSessionPoints] = useState(0);
 
-  // Restore active session on mount + sync with DB when logged in
+  // Register service worker on mount
   useEffect(() => {
-    registerServiceWorker().then(() => requestNotificationPermission());
+    registerServiceWorker().then(async () => {
+      const granted = await requestNotificationPermission();
+      if (granted) {
+        await subscribeToPush();
+      }
+    });
+    return () => stopReminderPolling();
   }, []);
 
   // Sync with MongoDB when session becomes available
@@ -82,6 +91,9 @@ export default function Home() {
       if (streak >= 2 && isFirstTaskToday()) {
         scheduleStreakWarning(streak);
       }
+
+      // Start polling for due reminders (sends push notifications)
+      startReminderPolling();
     };
 
     syncAndRestore();

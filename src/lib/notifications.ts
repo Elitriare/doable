@@ -1,6 +1,6 @@
 let swRegistration: ServiceWorkerRegistration | null = null;
 let comebackTimer: ReturnType<typeof setTimeout> | null = null;
-const scheduledTimers = new Map<string, ReturnType<typeof setTimeout>>();
+let reminderPollInterval: ReturnType<typeof setInterval> | null = null;
 
 export async function registerServiceWorker(): Promise<void> {
   if (typeof window === "undefined" || !("serviceWorker" in navigator)) return;
@@ -24,27 +24,76 @@ export async function requestNotificationPermission(): Promise<boolean> {
   return result === "granted";
 }
 
-async function showNotification(title: string, body: string, tag: string): Promise<void> {
-  // Try basic Notification API first — most reliable on macOS Chrome
-  try {
-    new Notification(title, { body, tag });
-    return;
-  } catch {
-    // Fallback to service worker notification
-  }
+// Subscribe to Web Push and save subscription to server
+export async function subscribeToPush(): Promise<boolean> {
+  if (!swRegistration || !("PushManager" in window)) return false;
 
   try {
-    const reg = await navigator.serviceWorker.ready;
-    await reg.showNotification(title, { body, tag });
+    const permission = await requestNotificationPermission();
+    if (!permission) return false;
+
+    const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+    if (!vapidKey) return false;
+
+    // Check for existing subscription
+    let subscription = await swRegistration.pushManager.getSubscription();
+
+    if (!subscription) {
+      subscription = await swRegistration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(vapidKey) as BufferSource,
+      });
+    }
+
+    // Save to server
+    await fetch("/api/push/subscribe", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ subscription: subscription.toJSON() }),
+    });
+
+    return true;
   } catch {
-    // All notification methods failed
+    return false;
   }
 }
+
+// Check if push is currently subscribed
+export async function isPushSubscribed(): Promise<boolean> {
+  if (!swRegistration || !("PushManager" in window)) return false;
+  try {
+    const sub = await swRegistration.pushManager.getSubscription();
+    return !!sub;
+  } catch {
+    return false;
+  }
+}
+
+// Show a notification (client-side fallback)
+async function showNotification(title: string, body: string, tag: string): Promise<void> {
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    await reg.showNotification(title, {
+      body,
+      tag,
+      icon: "/images/B4.png",
+      badge: "/images/B4.png",
+    });
+  } catch {
+    try {
+      new Notification(title, { body, tag });
+    } catch {
+      // All methods failed
+    }
+  }
+}
+
+// --- Comeback notification (client-side, tab must be open) ---
 
 const COMEBACK_DELAY_MS = 15 * 60 * 1000; // 15 minutes
 
 export function scheduleComebackNotification(taskTitle: string, progress: string): void {
-  if (Notification.permission !== "granted") return;
+  if (typeof window === "undefined" || Notification.permission !== "granted") return;
 
   cancelComebackNotification();
   comebackTimer = setTimeout(() => {
@@ -64,52 +113,60 @@ export function cancelComebackNotification(): void {
   }
 }
 
-export function scheduleTaskNotification(id: string, title: string, triggerAt: number): void {
+// --- Streak warning ---
+
+export async function scheduleStreakWarning(currentStreak: number): Promise<void> {
+  if (typeof window === "undefined" || currentStreak < 2) return;
   if (Notification.permission !== "granted") return;
-
-  const delay = triggerAt - Date.now();
-  if (delay <= 0) return;
-
-  // Clear existing timer for this id if any
-  const existing = scheduledTimers.get(id);
-  if (existing) clearTimeout(existing);
-
-  const timer = setTimeout(() => {
-    showNotification(
-      "Time to get it done!",
-      `You said you'd start "${title}" now. Let's make it doable.`,
-      `scheduled-${id}`
-    );
-    scheduledTimers.delete(id);
-  }, delay);
-
-  scheduledTimers.set(id, timer);
-}
-
-// Schedule a streak-loss warning notification for 8pm if user hasn't completed a task today
-let streakTimer: ReturnType<typeof setTimeout> | null = null;
-
-export function scheduleStreakWarning(currentStreak: number): void {
-  if (typeof window === "undefined" || !("Notification" in window)) return;
-  if (Notification.permission !== "granted" || currentStreak < 2) return;
-  if (streakTimer) clearTimeout(streakTimer);
 
   const now = new Date();
   const eightPm = new Date(now);
   eightPm.setHours(20, 0, 0, 0);
-
-  // If it's already past 8pm, don't schedule
   if (now >= eightPm) return;
 
   const delay = eightPm.getTime() - now.getTime();
 
-  streakTimer = setTimeout(() => {
+  setTimeout(() => {
     showNotification(
       `Your ${currentStreak}-day streak is at risk!`,
       "Complete a task before midnight to keep it going.",
       "streak-warning"
     );
-    streakTimer = null;
   }, delay);
 }
 
+// --- Reminder polling (checks server for due reminders every 60s) ---
+
+export function startReminderPolling(): void {
+  if (reminderPollInterval) return;
+  checkDueReminders();
+  reminderPollInterval = setInterval(checkDueReminders, 60 * 1000);
+}
+
+export function stopReminderPolling(): void {
+  if (reminderPollInterval) {
+    clearInterval(reminderPollInterval);
+    reminderPollInterval = null;
+  }
+}
+
+async function checkDueReminders(): Promise<void> {
+  try {
+    await fetch("/api/reminders/check", { method: "POST" });
+  } catch {
+    // Silently fail
+  }
+}
+
+// --- Helpers ---
+
+function urlBase64ToUint8Array(base64String: string): Uint8Array {
+  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const rawData = atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+  for (let i = 0; i < rawData.length; i++) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray;
+}
