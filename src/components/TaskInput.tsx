@@ -27,7 +27,7 @@ export default function TaskInput({ onSubmit }: TaskInputProps) {
         <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-blue-500 bg-clip-text text-transparent">
           doable
         </h1>
-        <p className="text-white mb-10 text-lg">
+        <p className="text-[#3a6a94] mb-10 text-lg">
           Turn overwhelming tasks into doable steps
         </p>
         <div id="image" style={{textAlign:"center"}}>
@@ -55,8 +55,8 @@ export default function TaskInput({ onSubmit }: TaskInputProps) {
           type="submit"
           disabled={!task.trim()}
           className="w-full mt-4 py-4 rounded-2xl font-bold text-lg cursor-pointer
-                     bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white
-                     hover:from-violet-600 hover:to-fuchsia-600 transition-all
+                     bg-[#4a8fe7] text-white
+                     hover:bg-[#3a7dd4] transition-all
                      disabled:opacity-40 disabled:cursor-not-allowed"
           whileHover={task.trim() ? { scale: 1.02 } : {}}
           whileTap={task.trim() ? { scale: 0.98 } : {}}

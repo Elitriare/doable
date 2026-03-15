@@ -47,7 +47,7 @@ export default function ScheduleReminder() {
     <div className="mt-8 w-full max-w-lg mx-auto">
       <button
         onClick={() => setOpen(!open)}
-        className="text-sm text-gray-500 hover:text-violet-400 transition-colors cursor-pointer flex items-center gap-2 mx-auto"
+        className="text-sm text-[#5a7fa8] hover:text-[#2e6dc0] transition-colors cursor-pointer flex items-center gap-2 mx-auto"
       >
         <span>⏰</span>
         <span>Schedule a reminder to start a task</span>
@@ -91,8 +91,8 @@ export default function ScheduleReminder() {
                       onClick={handleSchedule}
                       disabled={!taskName.trim() || !time}
                       className="px-6 py-3 rounded-xl font-semibold text-white
-                                 bg-gradient-to-r from-violet-500 to-fuchsia-500
-                                 hover:from-violet-600 hover:to-fuchsia-600
+                                 bg-[#4a8fe7]
+                                 hover:bg-[#3a7dd4]
                                  disabled:opacity-40 disabled:cursor-not-allowed
                                  transition-all cursor-pointer"
                     >

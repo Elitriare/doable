@@ -28,14 +28,14 @@ export default function BlockerSelect({ onSelect }: BlockerSelectProps) {
   return (
     <div className="w-full max-w-lg mx-auto">
       <motion.h2
-        className="text-2xl font-bold text-center mb-2"
+        className="text-2xl font-bold text-center mb-2 text-[#1f3a5c]"
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
       >
         What&apos;s holding you back?
       </motion.h2>
       <motion.p
-        className="text-gray-400 text-center mb-8"
+        className="text-[#5a7fa8] text-center mb-8"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.1 }}
@@ -49,7 +49,7 @@ export default function BlockerSelect({ onSelect }: BlockerSelectProps) {
             key={option.id}
 
             onClick={() => onSelect(option.id as BlockerType)}
-            className="w-full p-4 rounded-2xl bg-blue-900 border border-white hover:border-violet-500
+            className="w-full p-4 rounded-2xl bg-white/60 border border-[#b8d4ed] hover:border-[#4a8fe7]
                        text-left transition-colors cursor-pointer flex items-center gap-4"
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -59,8 +59,8 @@ export default function BlockerSelect({ onSelect }: BlockerSelectProps) {
           >
             <img className="w-18 h-18" src={option.image}></img>
             <div>
-              <div className="font-semibold text-white">{option.label}</div>
-              <div className="text-sm text-white">{option.description}</div>
+              <div className="font-semibold text-[#1f3a5c]">{option.label}</div>
+              <div className="text-sm text-[#3a6a94]">{option.description}</div>
             </div>
           </motion.button>
         ))}
@@ -75,14 +75,14 @@ export default function BlockerSelect({ onSelect }: BlockerSelectProps) {
             onClick={() => setShowCustom((v) => !v)}
             className={`w-full p-4 rounded-2xl border text-left transition-colors cursor-pointer flex items-center gap-4
               ${showCustom
-                ? "bg-blue-900 border-white"
-                : "bg-blue-900 border-white hover:border-violet-500"
+                ? "bg-white/60 border-[#4a8fe7]"
+                : "bg-white/60 border-[#b8d4ed] hover:border-[#4a8fe7]"
               }`}
           >
             <span className="text-3xl">💬</span>
             <div>
-              <div className="font-semibold text-white">Something else</div>
-              <div className="text-sm text-gray-400">My reason isn&apos;t listed — I&apos;ll explain it myself</div>
+              <div className="font-semibold text-[#1f3a5c]">Something else</div>
+              <div className="text-sm text-[#5a7fa8]">My reason isn&apos;t listed — I&apos;ll explain it myself</div>
             </div>
           </button>
 
@@ -102,8 +102,8 @@ export default function BlockerSelect({ onSelect }: BlockerSelectProps) {
                     onChange={(e) => setCustomReason(e.target.value)}
                     placeholder="Describe what's making this task difficult for you..."
                     rows={3}
-                    className="w-full p-3 rounded-xl bg-white border border-gray-700 text-black text-sm
-                               placeholder-gray-500 focus:outline-none focus:border-violet-500 resize-none"
+                    className="w-full p-3 rounded-xl bg-white border border-[#b8d4ed] text-[#1f3a5c] text-sm
+                               placeholder-[#5a7fa8] focus:outline-none focus:border-[#4a8fe7] resize-none"
                   />
                   <motion.button
                     onClick={() => {
@@ -112,7 +112,7 @@ export default function BlockerSelect({ onSelect }: BlockerSelectProps) {
                     disabled={!customReason.trim()}
                     className="w-full py-3 rounded-xl font-semibold text-sm transition-colors
                                disabled:opacity-40 disabled:cursor-not-allowed
-                               bg-violet-600 hover:bg-violet-500 text-white cursor-pointer"
+                               bg-[#4a8fe7] hover:bg-[#3a7dd4] text-white cursor-pointer"
                     whileHover={{ scale: customReason.trim() ? 1.02 : 1 }}
                     whileTap={{ scale: customReason.trim() ? 0.98 : 1 }}
                   >

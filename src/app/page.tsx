@@ -203,7 +203,7 @@ export default function Home() {
                 <JournalDrawer entries={currentTask.journal} />
                 <button
                   onClick={handleNewTask}
-                  className="block mx-auto text-sm text-gray-500 hover:text-gray-300 transition-colors cursor-pointer"
+                  className="block mx-auto text-sm text-[#5a7fa8] hover:text-[#2e6dc0] transition-colors cursor-pointer"
                 >
                   Start over
                 </button>
