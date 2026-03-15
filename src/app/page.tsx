@@ -268,8 +268,8 @@ export default function Home() {
 
   const currentStep = currentTask?.steps[currentTask.currentStep];
 
-  // During active coaching, hide the tab bar
-  const showTabs = screen === "home" || (screen === "coaching" && !currentTask);
+  // Show tabs on non-coach tabs, or on coach tab when at home/no active task
+  const showTabs = activeTab !== "coach" || screen === "home" || (screen === "coaching" && !currentTask);
 
   // Auth loading state
   if (authStatus === "loading") {
@@ -353,7 +353,7 @@ export default function Home() {
           </div>
         )}
 
-        {activeTab === "calendar" && screen === "home" && (
+        {activeTab === "calendar" && (
           <CalendarTab
             onImport={handleCalendarImport}
             onResume={handleResumeTask}
@@ -361,9 +361,9 @@ export default function Home() {
           />
         )}
 
-        {activeTab === "compete" && screen === "home" && <Leaderboard />}
+        {activeTab === "compete" && <Leaderboard />}
 
-        {activeTab === "analytics" && screen === "home" && <Analytics />}
+        {activeTab === "analytics" && <Analytics />}
 
         {activeTab === "coach" && (
           <>
