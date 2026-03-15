@@ -72,7 +72,7 @@ export default function CalendarSync({ taskTitle, steps, onEventIdsCreated, exis
   if (!session) return (
     <button
       onClick={() => signIn("google")}
-      className="flex items-center gap-2 mx-auto text-sm text-gray-400 hover:text-violet-400 transition-colors cursor-pointer"
+      className="flex items-center gap-2 mx-auto text-sm text-[#5a7fa8] hover:text-[#2e6dc0] transition-colors cursor-pointer"
     >
       <span>📅</span>
       <span>Connect Google Calendar</span>
@@ -80,32 +80,32 @@ export default function CalendarSync({ taskTitle, steps, onEventIdsCreated, exis
   );
 
   if (status === "done" || status === "rescheduled") return (
-    <div className="flex items-center gap-2 justify-center text-sm text-green-400">
+    <div className="flex items-center gap-2 justify-center text-sm text-green-600">
       <span>✓</span>
       <span>{status === "done" ? `Added ${steps.length} events to Google Calendar` : "Events rescheduled"}</span>
     </div>
   );
 
   return (
-    <div className="bg-gray-900 border border-gray-800 rounded-2xl p-4 space-y-3">
+    <div className="bg-white/60 border border-[#b8d4ed] rounded-2xl p-4 space-y-3">
       <div className="flex items-center gap-2">
         <span>📅</span>
-        <p className="text-white text-sm font-medium">
+        <p className="text-[#1f3a5c] text-sm font-medium">
           {alreadySynced ? "Reschedule in Google Calendar" : "Add to Google Calendar"}
         </p>
-        <span className="text-gray-500 text-xs ml-auto">~{totalMinutes} min total</span>
+        <span className="text-[#5a7fa8] text-xs ml-auto">~{totalMinutes} min total</span>
       </div>
       <div className="flex gap-3 items-center">
         <input
           type="datetime-local"
           value={startTime}
           onChange={(e) => setStartTime(e.target.value)}
-          className="flex-1 bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-violet-500"
+          className="flex-1 bg-white border border-[#b8d4ed] rounded-xl px-3 py-2 text-[#1f3a5c] text-sm focus:outline-none focus:border-[#4a8fe7]"
         />
         <button
           onClick={alreadySynced ? handleReschedule : handleAdd}
           disabled={status === "loading" || status === "rescheduling"}
-          className="py-2 px-4 rounded-xl font-bold text-sm text-white bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:from-violet-600 hover:to-fuchsia-600 transition-all disabled:opacity-40"
+          className="py-2 px-4 rounded-xl font-bold text-sm text-white bg-[#4a8fe7] hover:bg-[#3a7dd4] transition-all disabled:opacity-40 cursor-pointer"
         >
           {status === "loading" || status === "rescheduling"
             ? "Saving..."
@@ -113,7 +113,7 @@ export default function CalendarSync({ taskTitle, steps, onEventIdsCreated, exis
         </button>
       </div>
       {status === "error" && (
-        <p className="text-red-400 text-xs">Something went wrong. Try again.</p>
+        <p className="text-red-500 text-xs">Something went wrong. Try again.</p>
       )}
     </div>
   );

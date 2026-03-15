@@ -31,7 +31,7 @@ export default function CalendarEvents({ onImport }: Props) {
   if (!session) return (
     <button
       onClick={() => signIn("google")}
-      className="flex items-center gap-2 mx-auto text-sm text-gray-400 hover:text-violet-400 transition-colors cursor-pointer mt-4"
+      className="flex items-center gap-2 mx-auto text-sm text-[#5a7fa8] hover:text-[#2e6dc0] transition-colors cursor-pointer mt-4"
     >
       <span>📅</span>
       <span>Import from Google Calendar</span>
@@ -39,25 +39,25 @@ export default function CalendarEvents({ onImport }: Props) {
   );
 
   if (loading) return (
-    <p className="text-center text-gray-500 text-sm mt-4">Loading your calendar...</p>
+    <p className="text-center text-[#5a7fa8] text-sm mt-4">Loading your calendar...</p>
   );
 
   if (events.length === 0) return null;
 
   return (
     <div className="w-full max-w-lg mx-auto mt-8">
-      <p className="text-xs text-gray-500 font-medium uppercase tracking-wider mb-3">
+      <p className="text-xs text-[#5a7fa8] font-medium uppercase tracking-wider mb-3">
         From your calendar
       </p>
       <div className="space-y-2">
         {events.map((event) => (
           <div
             key={event.id}
-            className="flex items-center justify-between bg-gray-900 border border-gray-800 rounded-2xl px-4 py-3"
+            className="flex items-center justify-between bg-white/60 border border-[#b8d4ed] rounded-2xl px-4 py-3"
           >
             <div className="min-w-0">
-              <p className="text-white text-sm font-medium truncate">{event.title}</p>
-              <p className="text-gray-500 text-xs">
+              <p className="text-[#1f3a5c] text-sm font-medium truncate">{event.title}</p>
+              <p className="text-[#5a7fa8] text-xs">
                 {new Date(event.start).toLocaleDateString([], {
                   weekday: "short", month: "short", day: "numeric",
                   hour: "2-digit", minute: "2-digit"
@@ -66,7 +66,7 @@ export default function CalendarEvents({ onImport }: Props) {
             </div>
             <button
               onClick={() => onImport(event.title)}
-              className="ml-4 shrink-0 text-xs py-1.5 px-3 rounded-xl font-bold text-white bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:from-violet-600 hover:to-fuchsia-600 transition-all"
+              className="ml-4 shrink-0 text-xs py-1.5 px-3 rounded-xl font-bold text-white bg-[#4a8fe7] hover:bg-[#3a7dd4] transition-all cursor-pointer"
             >
               Coach me
             </button>
