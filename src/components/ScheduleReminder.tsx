@@ -62,7 +62,7 @@ export default function ScheduleReminder() {
             transition={{ duration: 0.2 }}
             className="overflow-hidden"
           >
-            <div className="mt-4 bg-gray-900 border border-gray-800 rounded-2xl p-5 space-y-4">
+            <div className="mt-4 bg-[#9cb4f0] border border-white rounded-2xl p-5 space-y-4">
               {confirmed ? (
                 <motion.p
                   initial={{ scale: 0.9, opacity: 0 }}
@@ -78,14 +78,14 @@ export default function ScheduleReminder() {
                     value={taskName}
                     onChange={(e) => setTaskName(e.target.value)}
                     placeholder="What task do you need to do?"
-                    className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-violet-500 transition-colors"
+                    className="w-full bg-white border border-white rounded-xl px-4 py-3 text-black placeholder-gray-500 focus:outline-none focus:border-white transition-colors"
                   />
                   <div className="flex gap-3">
                     <input
                       type="time"
                       value={time}
                       onChange={(e) => setTime(e.target.value)}
-                      className="flex-1 bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-violet-500 transition-colors [color-scheme:dark]"
+                      className="flex-1 bg-white border border-white rounded-xl px-4 py-3 text-black focus:outline-none focus:border-white transition-colors [color-scheme:dark]"
                     />
                     <button
                       onClick={handleSchedule}
