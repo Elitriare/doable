@@ -4,23 +4,23 @@ import { BlockerType } from "@/types";
 
 const blockerPrompts: Record<BlockerType, string> = {
   "too-big": `The user feels overwhelmed because this task feels too big and daunting.
-Break it into 4-6 meaningful phases that each take 10-20 minutes.
+Break it into meaningful phases that each take 10-20 minutes.
 Make each phase feel like a real, satisfying chunk of progress.`,
 
   "too-boring": `The user finds this task boring and tedious — they just can't be bothered.
-Break it into 4-6 punchy, momentum-building phases.
+Break it into punchy, momentum-building phases.
 Frame each as a quick win. Keep the energy light and irreverent.`,
 
   "no-idea": `The user doesn't know where to start — they feel lost and directionless.
-Break it into 4-6 clear phases with enough context that they know exactly what to do.
+Break it into clear phases with enough context that they know exactly what to do.
 Start from orientation and build toward completion.`,
 
   "fear": `The user is scared of doing this task wrong — perfectionism or fear of failure is blocking them.
-Break it into 4-6 low-stakes phases framed as drafts or experiments.
+Break it into low-stakes phases framed as drafts or experiments.
 Emphasise that imperfect action beats no action.`,
 
   "low-energy": `The user has low energy right now — they're tired and struggling to get going.
-Break it into 4-6 phases, starting very gently and building momentum gradually.
+Break it into phases, starting very gently and building momentum gradually.
 Keep early phases simple and almost effortless.`,
 };
 
@@ -129,8 +129,11 @@ ${blockerPrompts[blocker as BlockerType]}
 
 The user's task: "${task}"
 
-Generate 4-6 meaningful phases to guide them through this task.
-Match the number of steps to the task complexity — a simple task like "reply to an email" needs only 3-4 steps, while "write a research paper" may need 5-6. Each step should represent real progress. Don't pad with trivial steps.
+Generate the RIGHT number of steps for this task — no more, no less.
+- Quick tasks (reply to email, make a call, tidy desk): 2-3 steps
+- Medium tasks (write an essay outline, study a chapter, prep a presentation): 3-5 steps
+- Big tasks (write a full paper, build a project, deep study session): 5-7 steps
+Every step must represent REAL progress. Never pad with filler like "open your laptop" or "take a deep breath" unless the blocker is low-energy. If the task is simple, 2-3 steps is perfect — don't stretch it.
 
 The journalPrompt for each step must:
 - For step 1: directly acknowledge the EXACT reason they're stuck ("${blocker}") and speak to that specific feeling before encouraging them in
