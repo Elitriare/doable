@@ -68,4 +68,4 @@ export type AppScreen =
   | "complete"
   | "journey";
 
-export type AppTab = "coach" | "analytics";
+export type AppTab = "coach" | "calendar" | "analytics";

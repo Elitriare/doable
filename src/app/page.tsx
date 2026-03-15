@@ -22,6 +22,7 @@ import Analytics from "@/components/Analytics";
 import SpotifyPlayer from "@/components/SpotifyPlayer";
 import CalendarSync from "@/components/CalendarSync";
 import CalendarEvents from "@/components/CalendarEvents";
+import CalendarTab from "@/components/CalendarTab";
 import LoginScreen from "@/components/LoginScreen";
 
 export default function Home() {
@@ -217,6 +218,16 @@ export default function Home() {
               Coach
             </button>
             <button
+              onClick={() => setActiveTab("calendar")}
+              className={`px-6 py-2 rounded-full text-sm font-semibold transition-all cursor-pointer ${
+                activeTab === "calendar"
+                  ? "bg-[#4a8fe7] text-white shadow-md"
+                  : "bg-white/50 text-[#5a7fa8] hover:bg-white/70"
+              }`}
+            >
+              Calendar
+            </button>
+            <button
               onClick={() => setActiveTab("analytics")}
               className={`px-6 py-2 rounded-full text-sm font-semibold transition-all cursor-pointer ${
                 activeTab === "analytics"
@@ -244,6 +255,10 @@ export default function Home() {
           </div>
         )}
 
+        {activeTab === "calendar" && screen === "home" && (
+          <CalendarTab onImport={handleCalendarImport} />
+        )}
+
         {activeTab === "analytics" && screen === "home" && <Analytics />}
 
         {activeTab === "coach" && (
@@ -251,8 +266,7 @@ export default function Home() {
             {screen === "home" && (
               <>
                 <TaskInput onSubmit={handleTaskSubmit} />
-                <CalendarEvents onImport={handleCalendarImport} />
-          <ScheduleReminder />
+                <ScheduleReminder />
               </>
             )}
 
