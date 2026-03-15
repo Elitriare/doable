@@ -8,8 +8,8 @@ import {
   deleteTask,
   getActiveTask,
   pullTasksFromDb,
-  pushAllTasksToDb,
   pullProfileFromDb,
+  ensureUserScope,
   awardPoints,
   getStreak,
   isFirstTaskToday,
@@ -63,9 +63,9 @@ export default function Home() {
     if (authStatus !== "authenticated") return;
 
     const syncAndRestore = async () => {
-      // Push any local tasks to DB (migration for first login)
-      await pushAllTasksToDb();
-      // Pull merged tasks from DB
+      // Clear stale localStorage if a different user logged in
+      ensureUserScope(session!.user!.email!);
+      // Pull tasks from DB (DB is source of truth)
       await pullTasksFromDb();
       // Pull profile (points, friendCode, etc.)
       await pullProfileFromDb();

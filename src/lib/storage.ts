@@ -3,6 +3,19 @@ import { DEFAULT_REWARDS } from "./constants";
 
 const TASKS_KEY = "doable_tasks";
 const PROFILE_KEY = "doable_profile";
+const USER_KEY = "doable_current_user";
+
+// Clear localStorage when a different user logs in
+export function ensureUserScope(email: string): void {
+  if (typeof window === "undefined") return;
+  const prev = localStorage.getItem(USER_KEY);
+  if (prev && prev !== email) {
+    // Different user — wipe stale data so it doesn't leak across accounts
+    localStorage.removeItem(TASKS_KEY);
+    localStorage.removeItem(PROFILE_KEY);
+  }
+  localStorage.setItem(USER_KEY, email);
+}
 
 export function getTasks(): Task[] {
   if (typeof window === "undefined") return [];
@@ -103,29 +116,28 @@ function syncProfileToDb(profile: UserProfile): void {
   }).catch(() => {});
 }
 
-// Pull all tasks from DB and merge with localStorage (DB wins on conflicts)
+// Pull all tasks from DB — DB is the source of truth
 export async function pullTasksFromDb(): Promise<Task[]> {
   try {
     const res = await fetch("/api/tasks");
     if (!res.ok) return getTasks();
     const { tasks: dbTasks } = await res.json();
 
-    if (!dbTasks || dbTasks.length === 0) return getTasks();
+    if (!dbTasks || dbTasks.length === 0) {
+      // No tasks in DB — clear localStorage too
+      localStorage.removeItem(TASKS_KEY);
+      return [];
+    }
 
-    // Merge: DB tasks take priority, keep any local-only tasks
-    const localTasks = getTasks();
-    const dbTaskIds = new Set(dbTasks.map((t: Task) => t.id));
-    const localOnly = localTasks.filter((t) => !dbTaskIds.has(t.id));
-    const merged = [...dbTasks, ...localOnly];
-
-    localStorage.setItem(TASKS_KEY, JSON.stringify(merged));
-    return merged;
+    // DB is authoritative — replace localStorage entirely
+    localStorage.setItem(TASKS_KEY, JSON.stringify(dbTasks));
+    return dbTasks;
   } catch {
     return getTasks();
   }
 }
 
-// Pull profile from DB and merge with localStorage
+// Pull profile from DB — DB is the source of truth
 export async function pullProfileFromDb(): Promise<void> {
   try {
     const res = await fetch("/api/profile");
@@ -133,8 +145,8 @@ export async function pullProfileFromDb(): Promise<void> {
     const { profile: dbProfile } = await res.json();
     if (!dbProfile) return;
 
-    const local = getProfile();
-    const merged = { ...DEFAULT_PROFILE, ...local, ...dbProfile };
+    // DB is authoritative — replace localStorage entirely
+    const merged = { ...DEFAULT_PROFILE, ...dbProfile };
     localStorage.setItem(PROFILE_KEY, JSON.stringify(merged));
   } catch {}
 }
