@@ -89,6 +89,18 @@ export async function pushAllTasksToDb(): Promise<void> {
   } catch {}
 }
 
+export function deleteTask(taskId: string): void {
+  const tasks = getTasks().filter((t) => t.id !== taskId);
+  localStorage.setItem(TASKS_KEY, JSON.stringify(tasks));
+
+  // Fire-and-forget delete from MongoDB
+  fetch("/api/tasks", {
+    method: "DELETE",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ taskId }),
+  }).catch(() => {});
+}
+
 export function getRandomReward(): string {
   const profile = getProfile();
   const rewards = profile.rewards.length > 0 ? profile.rewards : DEFAULT_REWARDS;

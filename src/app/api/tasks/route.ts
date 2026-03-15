@@ -72,3 +72,24 @@ export async function PUT(req: NextRequest) {
 
   return NextResponse.json({ success: true, synced: ops.length });
 }
+
+// DELETE — remove a task for the logged-in user
+export async function DELETE(req: NextRequest) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.email) {
+    return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  }
+
+  const { taskId } = await req.json();
+  if (!taskId) {
+    return NextResponse.json({ error: "Invalid taskId" }, { status: 400 });
+  }
+
+  const db = await getDb();
+  await db.collection("tasks").deleteOne({
+    id: taskId,
+    userEmail: session.user.email,
+  });
+
+  return NextResponse.json({ success: true });
+}

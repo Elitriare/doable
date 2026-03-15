@@ -22,9 +22,11 @@ interface DayData {
 
 interface Props {
   onImport: (title: string) => void;
+  onResume: (task: Task) => void;
+  onForfeit: (task: Task) => void;
 }
 
-export default function CalendarTab({ onImport }: Props) {
+export default function CalendarTab({ onImport, onResume, onForfeit }: Props) {
   const { data: session } = useSession();
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [loading, setLoading] = useState(false);
@@ -196,12 +198,25 @@ export default function CalendarTab({ onImport }: Props) {
                           </div>
                         </div>
                         {!task.completed && (
-                          <button
-                            onClick={() => onImport(task.title)}
-                            className="ml-3 shrink-0 text-xs py-1.5 px-3 rounded-xl font-bold text-[#4a8fe7] bg-white border border-[#b8d4ed] hover:bg-[#e8f1fb] transition-all cursor-pointer"
-                          >
-                            Resume
-                          </button>
+                          <div className="ml-3 flex items-center gap-1.5 shrink-0">
+                            <button
+                              onClick={() => onResume(task)}
+                              className="text-xs py-1.5 px-3 rounded-xl font-bold text-[#4a8fe7] bg-white border border-[#b8d4ed] hover:bg-[#e8f1fb] transition-all cursor-pointer"
+                            >
+                              Resume
+                            </button>
+                            <button
+                              onClick={() => {
+                                if (confirm(`Forfeit "${task.title}"? This can't be undone.`)) {
+                                  onForfeit(task);
+                                }
+                              }}
+                              className="text-xs py-1.5 px-2.5 rounded-xl font-medium text-red-400 hover:text-red-600 hover:bg-red-50 transition-all cursor-pointer"
+                              title="Forfeit task"
+                            >
+                              ✕
+                            </button>
+                          </div>
                         )}
                       </div>
                     ))}

@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { AppScreen, AppTab, BlockerType, Task, Step, JournalEntryData } from "@/types";
-import { saveTask, getActiveTask, pullTasksFromDb, pushAllTasksToDb } from "@/lib/storage";
+import { saveTask, deleteTask, getActiveTask, pullTasksFromDb, pushAllTasksToDb } from "@/lib/storage";
 import {
   registerServiceWorker,
   requestNotificationPermission,
@@ -181,6 +181,31 @@ export default function Home() {
     setScreen("home");
   };
 
+  const handleResumeTask = (task: Task) => {
+    setCurrentTask(task);
+    setTaskTitle(task.title);
+    setActiveTab("coach");
+    setScreen("coaching");
+  };
+
+  const handleForfeitTask = (task: Task) => {
+    // Clean up calendar events if any
+    if (task.calendarEventIds?.length) {
+      fetch("/api/calendar/delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ eventIds: task.calendarEventIds }),
+      });
+    }
+    deleteTask(task.id);
+    // If this was the active task, clear it
+    if (currentTask?.id === task.id) {
+      setCurrentTask(null);
+      setTaskTitle("");
+      setScreen("home");
+    }
+  };
+
   const currentStep = currentTask?.steps[currentTask.currentStep];
 
   // During active coaching, hide the tab bar
@@ -256,7 +281,11 @@ export default function Home() {
         )}
 
         {activeTab === "calendar" && screen === "home" && (
-          <CalendarTab onImport={handleCalendarImport} />
+          <CalendarTab
+            onImport={handleCalendarImport}
+            onResume={handleResumeTask}
+            onForfeit={handleForfeitTask}
+          />
         )}
 
         {activeTab === "analytics" && screen === "home" && <Analytics />}
