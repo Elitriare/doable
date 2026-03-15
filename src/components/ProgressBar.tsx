@@ -12,7 +12,7 @@ export default function ProgressBar({ current, total }: ProgressBarProps) {
 
   return (
     <div className="w-full">
-      <div className="flex justify-between text-sm text-gray-400 mb-2">
+      <div className="flex justify-between text-sm text-[#3a6a94] mb-2">
         <span>
           Step {Math.min(current + 1, total)} of {total}
         </span>
@@ -20,7 +20,7 @@ export default function ProgressBar({ current, total }: ProgressBarProps) {
       </div>
       <div className="w-full h-3 bg-white rounded-full overflow-hidden">
         <motion.div
-          className="h-full rounded-full bg-gradient-to-r from-blue-200 to-blue-500"
+          className="h-full rounded-full bg-[#4a8fe7]"
           initial={{ width: 0 }}
           animate={{ width: `${percentage}%` }}
           transition={{ duration: 0.5, ease: "easeOut" }}

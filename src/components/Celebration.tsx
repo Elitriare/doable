@@ -10,7 +10,7 @@ interface CelebrationProps {
 }
 
 function ConfettiPiece({ index, delay }: { index: number; delay: number }) {
-  const colors = ["#8b5cf6", "#d946ef", "#f59e0b", "#10b981", "#3b82f6"];
+  const colors = ["#4a8fe7", "#3a7dd4", "#6ba3ed", "#2e6dc0", "#fce7bd"];
   const color = colors[index % colors.length];
   const left = (index * 17) % 100;
   const size = 4 + (index % 8);
@@ -67,7 +67,7 @@ export default function Celebration({ taskTitle, onNewTask }: CelebrationProps) 
       </motion.div>
 
       <motion.h2
-        className="text-3xl font-bold mb-2 text-blue-400"
+        className="text-3xl font-bold mb-2 text-[#2e6dc0]"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
@@ -76,7 +76,7 @@ export default function Celebration({ taskTitle, onNewTask }: CelebrationProps) 
       </motion.h2>
 
       <motion.p
-        className="text-gray-400 mb-8"
+        className="text-[#5a7fa8] mb-8"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.5 }}
@@ -91,18 +91,18 @@ export default function Celebration({ taskTitle, onNewTask }: CelebrationProps) 
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.7 }}
         >
-          <div className="text-sm text-[#65b5f7] font-medium mb-2">
+          <div className="text-sm text-[#4a8fe7] font-medium mb-2">
             YOUR REWARD
           </div>
-          <div className="text-lg font-semibold text-[#97cffc]">{reward}</div>
+          <div className="text-lg font-semibold text-[#1f3a5c]">{reward}</div>
         </motion.div>
       )}
 
       <motion.button
         onClick={onNewTask}
         className="py-4 px-8 rounded-2xl font-bold cursor-pointer
-                   bg-gradient-to-r from-[#abd9ff] to-[#87c6fa] text-white
-                   hover:from-[#97cffc] hover:to-[#65b5f7] transition-all"
+                   bg-[#4a8fe7] text-white
+                   hover:bg-[#3a7dd4] transition-all"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 1 }}

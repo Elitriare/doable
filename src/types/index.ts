@@ -31,16 +31,22 @@ export interface MicroStep {
   id: number;
   text: string;
   completed: boolean;
+  startedAt?: number;
+  completedAt?: number;
+  proofUploaded?: boolean;
 }
 
 export interface Task {
   id: string;
   title: string;
   blocker: BlockerType;
+  category: string;
   steps: Step[];
   currentStep: number;
   completed: boolean;
   createdAt: number;
+  startedAt?: number;
+  completedAt?: number;
   journal: JournalEntryData[];
   calendarEventIds?: string[]; // one per step, in order
 }
@@ -61,3 +67,5 @@ export type AppScreen =
   | "coaching"
   | "complete"
   | "journey";
+
+export type AppTab = "coach" | "analytics";

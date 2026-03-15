@@ -38,7 +38,6 @@ Example: {"valid":false,"reason":"The image shows a cat, not a completed documen
     });
 
     const text = response.content[0].type === "text" ? response.content[0].text : "";
-    console.log("Claude raw response:", text);
 
     let valid = false;
     let reason = "Could not verify proof.";

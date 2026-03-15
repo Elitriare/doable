@@ -24,7 +24,7 @@ export default function JournalDrawer({ entries }: Props) {
       {/* Trigger button */}
       <button
         onClick={() => setOpen(true)}
-        className="flex items-center gap-2 mx-auto text-sm text-gray-400 hover:text-violet-400 transition-colors cursor-pointer"
+        className="flex items-center gap-2 mx-auto text-sm text-[#5a7fa8] hover:text-[#2e6dc0] transition-colors cursor-pointer"
       >
         <span>📖</span>
         <span>{entries.length} journal {entries.length === 1 ? "entry" : "entries"}</span>
@@ -44,7 +44,7 @@ export default function JournalDrawer({ entries }: Props) {
 
             {/* Sidebar */}
             <motion.div
-              className={`fixed top-0 bottom-0 z-50 w-80 bg-gray-950 border-gray-800 flex flex-col
+              className={`fixed top-0 bottom-0 z-50 w-80 bg-[#e8f0f8] border-[#b8d4ed] flex flex-col
                 ${side === "right" ? "right-0 border-l rounded-l-3xl" : "left-0 border-r rounded-r-3xl"}`}
               initial={{ x: side === "right" ? "100%" : "-100%" }}
               animate={{ x: 0 }}
@@ -52,21 +52,21 @@ export default function JournalDrawer({ entries }: Props) {
               transition={{ type: "spring", damping: 30, stiffness: 300 }}
             >
               {/* Header */}
-              <div className="flex items-center justify-between px-5 pt-6 pb-4 border-b border-gray-800 shrink-0">
-                <h2 className="text-white font-semibold">Your journey</h2>
+              <div className="flex items-center justify-between px-5 pt-6 pb-4 border-b border-[#b8d4ed] shrink-0">
+                <h2 className="text-[#1f3a5c] font-semibold">Your journey</h2>
                 <div className="flex items-center gap-2">
                   {/* Side toggle */}
                   <button
                     onClick={toggleSide}
                     title={`Move to ${side === "right" ? "left" : "right"}`}
-                    className="text-gray-500 hover:text-violet-400 transition-colors text-lg leading-none px-1"
+                    className="text-[#5a7fa8] hover:text-[#2e6dc0] transition-colors text-lg leading-none px-1"
                   >
                     {side === "right" ? "◀" : "▶"}
                   </button>
                   {/* Close */}
                   <button
                     onClick={() => setOpen(false)}
-                    className="text-gray-500 hover:text-gray-300 transition-colors text-sm"
+                    className="text-[#5a7fa8] hover:text-[#1f3a5c] transition-colors text-sm"
                   >
                     ✕
                   </button>
@@ -78,7 +78,7 @@ export default function JournalDrawer({ entries }: Props) {
                 {entries.map((entry, i) => (
                   <motion.div
                     key={i}
-                    className="bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden"
+                    className="bg-white/70 border border-[#b8d4ed] rounded-2xl overflow-hidden"
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.05 }}
@@ -93,20 +93,20 @@ export default function JournalDrawer({ entries }: Props) {
                     <div className="p-3">
                       {/* Step label */}
                       <div className="flex items-center gap-2 mb-2">
-                        <div className="w-4 h-4 rounded-full bg-violet-500/20 border border-violet-500/40 flex items-center justify-center shrink-0">
-                          <span className="text-violet-400 text-xs font-bold">{i + 1}</span>
+                        <div className="w-4 h-4 rounded-full bg-[#4a8fe7]/20 border border-[#4a8fe7]/40 flex items-center justify-center shrink-0">
+                          <span className="text-[#2e6dc0] text-xs font-bold">{i + 1}</span>
                         </div>
-                        <p className="text-gray-500 text-xs truncate">{entry.stepText}</p>
+                        <p className="text-[#5a7fa8] text-xs truncate">{entry.stepText}</p>
                       </div>
 
                       {/* Caption */}
-                      <p className="text-gray-300 text-xs italic mb-2">"{entry.caption}"</p>
+                      <p className="text-[#3a6a94] text-xs italic mb-2">"{entry.caption}"</p>
 
                       {/* Reflection */}
-                      <p className="text-violet-300 text-xs leading-relaxed">{entry.reflection}</p>
+                      <p className="text-[#2e6dc0] text-xs leading-relaxed">{entry.reflection}</p>
 
                       {/* Time */}
-                      <p className="text-gray-600 text-xs mt-2">
+                      <p className="text-[#5a7fa8] text-xs mt-2">
                         {new Date(entry.completedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                       </p>
                     </div>
