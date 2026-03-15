@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
       $setOnInsert: {
         userEmail: session.user.email,
         points: 0,
-        friendCode: crypto.randomUUID().slice(0, 6).toUpperCase(),
+        friendCode: Math.random().toString(36).slice(2, 8).toUpperCase(),
         displayName: session.user.name || "Anonymous",
         avatarUrl: session.user.image || "",
         friends: [],

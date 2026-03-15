@@ -26,10 +26,14 @@ export default function Leaderboard() {
 
   const localPoints = typeof window !== "undefined" ? getPoints() : 0;
 
+  const [fetchError, setFetchError] = useState("");
+
   const fetchLeaderboard = async () => {
     try {
       const res = await fetch("/api/friends");
       if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        setFetchError(errData.error || `API error ${res.status}`);
         setLoading(false);
         return;
       }
@@ -37,8 +41,9 @@ export default function Leaderboard() {
       setLeaderboard(data.leaderboard || []);
       setFriendCode(data.friendCode || "");
       setPointsHistory((data.pointsHistory || []).reverse());
-    } catch {
-      // silently fail
+      setFetchError("");
+    } catch (err) {
+      setFetchError(err instanceof Error ? err.message : "Network error");
     }
     setLoading(false);
   };
@@ -136,6 +141,9 @@ export default function Leaderboard() {
           )}
         </div>
         <p className="text-xs text-white/60 mt-2">Share this code with friends to compete</p>
+        {fetchError && (
+          <p className="text-xs text-red-200 bg-red-500/20 rounded-lg px-3 py-1.5 mt-2">{fetchError}</p>
+        )}
       </div>
 
       {/* Add Friend */}

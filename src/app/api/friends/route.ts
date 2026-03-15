@@ -3,78 +3,96 @@ import { NextRequest, NextResponse } from "next/server";
 import { authOptions } from "@/lib/auth";
 import { getDb } from "@/lib/mongodb";
 
+// Generate a simple 6-char code
+function generateCode(): string {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no ambiguous chars
+  let code = "";
+  for (let i = 0; i < 6; i++) {
+    code += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return code;
+}
+
 // GET — fetch leaderboard (self + friends with points)
 export async function GET() {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.email) {
-    return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-  }
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.email) {
+      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+    }
 
-  const db = await getDb();
-  const existing = await db.collection("profiles").findOne({ userEmail: session.user.email });
+    const db = await getDb();
+    const existing = await db.collection("profiles").findOne({ userEmail: session.user.email });
 
-  // Auto-create profile if it doesn't exist
-  let p: any;
-  if (!existing) {
-    p = {
-      userEmail: session.user.email,
-      rewards: [],
-      points: 0,
-      friendCode: crypto.randomUUID().slice(0, 6).toUpperCase(),
-      displayName: session.user.name || "Anonymous",
-      avatarUrl: session.user.image || "",
-      friends: [],
-      pointsHistory: [],
-    };
-    await db.collection("profiles").insertOne(p);
-  } else {
-    p = existing;
-  }
+    // Auto-create profile if it doesn't exist
+    let p: any;
+    if (!existing) {
+      p = {
+        userEmail: session.user.email,
+        rewards: [],
+        points: 0,
+        friendCode: generateCode(),
+        displayName: session.user.name || "Anonymous",
+        avatarUrl: session.user.image || "",
+        friends: [],
+        pointsHistory: [],
+      };
+      await db.collection("profiles").insertOne(p);
+    } else {
+      p = existing;
+    }
 
-  // Backfill friendCode if missing on older profiles
-  if (!p.friendCode) {
-    const code = crypto.randomUUID().slice(0, 6).toUpperCase();
-    await db.collection("profiles").updateOne(
-      { userEmail: session.user.email },
-      { $set: { friendCode: code, points: p.points || 0, friends: p.friends || [], pointsHistory: p.pointsHistory || [] } }
-    );
-    p.friendCode = code;
-  }
+    // Backfill friendCode if missing on older profiles
+    if (!p.friendCode) {
+      const code = generateCode();
+      await db.collection("profiles").updateOne(
+        { userEmail: session.user.email },
+        { $set: { friendCode: code, points: p.points || 0, friends: p.friends || [], pointsHistory: p.pointsHistory || [] } }
+      );
+      p.friendCode = code;
+    }
 
-  const friendEmails: string[] = p.friends || [];
+    const friendEmails: string[] = p.friends || [];
 
-  // Fetch friends' profiles
-  let friendProfiles: any[] = [];
-  if (friendEmails.length > 0) {
-    friendProfiles = await db
-      .collection("profiles")
-      .find({ userEmail: { $in: friendEmails } })
-      .project({ displayName: 1, avatarUrl: 1, points: 1, userEmail: 1, _id: 0 })
-      .toArray();
-  }
+    // Fetch friends' profiles
+    let friendProfiles: any[] = [];
+    if (friendEmails.length > 0) {
+      friendProfiles = await db
+        .collection("profiles")
+        .find({ userEmail: { $in: friendEmails } })
+        .project({ displayName: 1, avatarUrl: 1, points: 1, userEmail: 1, _id: 0 })
+        .toArray();
+    }
 
-  // Build leaderboard including self
-  const leaderboard = [
-    {
-      displayName: p.displayName || session.user.name || "You",
-      avatarUrl: p.avatarUrl || session.user.image || "",
+    // Build leaderboard including self
+    const leaderboard = [
+      {
+        displayName: p.displayName || session.user.name || "You",
+        avatarUrl: p.avatarUrl || session.user.image || "",
+        points: p.points || 0,
+        isYou: true,
+      },
+      ...friendProfiles.map((f: any) => ({
+        displayName: f.displayName || "Friend",
+        avatarUrl: f.avatarUrl || "",
+        points: f.points || 0,
+        isYou: false,
+      })),
+    ].sort((a, b) => b.points - a.points);
+
+    return NextResponse.json({
+      leaderboard,
+      friendCode: p.friendCode || "",
       points: p.points || 0,
-      isYou: true,
-    },
-    ...friendProfiles.map((f: any) => ({
-      displayName: f.displayName || "Friend",
-      avatarUrl: f.avatarUrl || "",
-      points: f.points || 0,
-      isYou: false,
-    })),
-  ].sort((a, b) => b.points - a.points);
-
-  return NextResponse.json({
-    leaderboard,
-    friendCode: p.friendCode || "",
-    points: p.points || 0,
-    pointsHistory: p.pointsHistory || [],
-  });
+      pointsHistory: p.pointsHistory || [],
+    });
+  } catch (err) {
+    console.error("Friends API error:", err);
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : "Internal server error" },
+      { status: 500 }
+    );
+  }
 }
 
 // POST — add or remove friend
