@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { AppScreen, BlockerType, Task, Step, JournalEntryData } from "@/types";
+import { AppScreen, AppTab, BlockerType, Task, Step, JournalEntryData } from "@/types";
 import { saveTask } from "@/lib/storage";
 import {
   registerServiceWorker,
@@ -17,9 +17,11 @@ import Celebration from "@/components/Celebration";
 import LoadingCoach from "@/components/LoadingCoach";
 import ScheduleReminder from "@/components/ScheduleReminder";
 import JournalDrawer from "@/components/JournalDrawer";
+import Analytics from "@/components/Analytics";
 
 export default function Home() {
   const [screen, setScreen] = useState<AppScreen>("home");
+  const [activeTab, setActiveTab] = useState<AppTab>("coach");
   const [currentTask, setCurrentTask] = useState<Task | null>(null);
   const [taskTitle, setTaskTitle] = useState("");
   const [loading, setLoading] = useState(false);
@@ -66,15 +68,18 @@ export default function Home() {
       }
 
       const data = await res.json();
+      const now = Date.now();
 
       const task: Task = {
         id: crypto.randomUUID(),
         title: taskTitle,
         blocker,
+        category: data.category || "Uncategorized",
         steps: data.steps as Step[],
         currentStep: 0,
         completed: false,
-        createdAt: Date.now(),
+        createdAt: now,
+        startedAt: now,
         journal: [],
       };
 
@@ -91,11 +96,13 @@ export default function Home() {
   const handleStepDone = (entry: Omit<JournalEntryData, "stepIndex" | "stepText" | "completedAt">) => {
     if (!currentTask) return;
 
+    const now = Date.now();
+
     const journalEntry: JournalEntryData = {
       ...entry,
       stepIndex: currentTask.currentStep,
       stepText: currentTask.steps[currentTask.currentStep].step,
-      completedAt: Date.now(),
+      completedAt: now,
     };
 
     const nextStep = currentTask.currentStep + 1;
@@ -105,6 +112,7 @@ export default function Home() {
       ...currentTask,
       currentStep: isLast ? currentTask.currentStep : nextStep,
       completed: isLast,
+      completedAt: isLast ? now : undefined,
       journal: [...currentTask.journal, journalEntry],
     };
 
@@ -126,51 +134,88 @@ export default function Home() {
 
   const currentStep = currentTask?.steps[currentTask.currentStep];
 
+  // During active coaching, hide the tab bar
+  const showTabs = screen === "home" || (screen === "coaching" && !currentTask);
+
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center px-6 py-12">
-      {error && (
-        <div className="fixed top-4 left-1/2 -translate-x-1/2 bg-red-900/80 border border-red-700 text-red-200 px-6 py-3 rounded-xl text-sm z-50">
-          {error}
-        </div>
-      )}
-
-      {screen === "home" && (
-        <>
-          <TaskInput onSubmit={handleTaskSubmit} />
-          <ScheduleReminder />
-        </>
-      )}
-
-      {screen === "blocker" && <BlockerSelect onSelect={handleBlockerSelect} />}
-
-      {screen === "coaching" && loading && <LoadingCoach />}
-
-      {screen === "coaching" && !loading && currentTask && currentStep && (
-        <div className="w-full max-w-lg mx-auto space-y-8">
-          <ProgressBar
-            current={currentTask.currentStep}
-            total={currentTask.steps.length}
-          />
-          <StepCard
-            step={currentStep.step}
-            journalPrompt={currentStep.journalPrompt}
-            stepNumber={currentTask.currentStep + 1}
-            totalSteps={currentTask.steps.length}
-            onDone={handleStepDone}
-          />
+    <div className="min-h-screen flex flex-col">
+      {/* Tab Navigation */}
+      {showTabs && (
+        <nav className="flex justify-center gap-1 pt-6 pb-2 px-4">
           <button
-            onClick={handleNewTask}
-            className="block mx-auto text-sm text-gray-500 hover:text-gray-300 transition-colors cursor-pointer"
+            onClick={() => setActiveTab("coach")}
+            className={`px-6 py-2 rounded-full text-sm font-semibold transition-all cursor-pointer ${
+              activeTab === "coach"
+                ? "bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white"
+                : "bg-white/20 text-gray-500 hover:bg-white/40"
+            }`}
           >
-            Start over
+            Coach
           </button>
-          <JournalDrawer entries={currentTask.journal} />  {/* 👈 add this */}
-        </div>
+          <button
+            onClick={() => setActiveTab("analytics")}
+            className={`px-6 py-2 rounded-full text-sm font-semibold transition-all cursor-pointer ${
+              activeTab === "analytics"
+                ? "bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white"
+                : "bg-white/20 text-gray-500 hover:bg-white/40"
+            }`}
+          >
+            Analytics
+          </button>
+        </nav>
       )}
 
-      {screen === "complete" && currentTask && (
-        <Celebration taskTitle={currentTask.title} onNewTask={handleNewTask} />
-      )}
-    </main>
+      <main className="flex-1 flex flex-col items-center justify-center px-6 py-12">
+        {error && (
+          <div className="fixed top-4 left-1/2 -translate-x-1/2 bg-red-900/80 border border-red-700 text-red-200 px-6 py-3 rounded-xl text-sm z-50">
+            {error}
+          </div>
+        )}
+
+        {activeTab === "analytics" && screen === "home" && <Analytics />}
+
+        {activeTab === "coach" && (
+          <>
+            {screen === "home" && (
+              <>
+                <TaskInput onSubmit={handleTaskSubmit} />
+                <ScheduleReminder />
+              </>
+            )}
+
+            {screen === "blocker" && <BlockerSelect onSelect={handleBlockerSelect} />}
+
+            {screen === "coaching" && loading && <LoadingCoach />}
+
+            {screen === "coaching" && !loading && currentTask && currentStep && (
+              <div className="w-full max-w-lg mx-auto space-y-8">
+                <ProgressBar
+                  current={currentTask.currentStep}
+                  total={currentTask.steps.length}
+                />
+                <StepCard
+                  step={currentStep.step}
+                  journalPrompt={currentStep.journalPrompt}
+                  stepNumber={currentTask.currentStep + 1}
+                  totalSteps={currentTask.steps.length}
+                  onDone={handleStepDone}
+                />
+                <JournalDrawer entries={currentTask.journal} />
+                <button
+                  onClick={handleNewTask}
+                  className="block mx-auto text-sm text-gray-500 hover:text-gray-300 transition-colors cursor-pointer"
+                >
+                  Start over
+                </button>
+              </div>
+            )}
+
+            {screen === "complete" && currentTask && (
+              <Celebration taskTitle={currentTask.title} onNewTask={handleNewTask} />
+            )}
+          </>
+        )}
+      </main>
+    </div>
   );
 }

@@ -130,6 +130,7 @@ ${blockerPrompts[blocker as BlockerType]}
 The user's task: "${task}"
 
 Generate 4-6 meaningful phases to guide them through this task.
+Match the number of steps to the task complexity — a simple task like "reply to an email" needs only 3-4 steps, while "write a research paper" may need 5-6. Each step should represent real progress. Don't pad with trivial steps.
 
 The journalPrompt for each step must:
 - For step 1: directly acknowledge the EXACT reason they're stuck ("${blocker}") and speak to that specific feeling before encouraging them in
@@ -138,7 +139,11 @@ The journalPrompt for each step must:
 - Casual and warm, like a friend who gets it — not a corporate coach
 - 1-2 sentences max
 
-IMPORTANT: Respond with ONLY a JSON array of objects, no other text.
+Also suggest a short category label for this task (e.g. "Math", "English", "Work", "Chores", "Coding", "Health").
+
+IMPORTANT: Respond with ONLY a JSON object like this, no other text:
+{"steps": [{"step": "...", "journalPrompt": "...", "estimatedMinutes": 10}, ...], "category": "Work"}
+
 ${blockerExamples[blocker as BlockerType]}`,
         },
       ],
@@ -153,9 +158,13 @@ ${blockerExamples[blocker as BlockerType]}`,
     }
 
     const clean = content.text.replace(/```json|```/g, "").trim();
-    const steps = JSON.parse(clean);
+    const parsed = JSON.parse(clean);
 
-    return NextResponse.json({ steps });
+    // Handle both formats: array of steps or object with steps + category
+    const steps = Array.isArray(parsed) ? parsed : parsed.steps;
+    const category = Array.isArray(parsed) ? "Uncategorized" : (parsed.category || "Uncategorized");
+
+    return NextResponse.json({ steps, category });
   } catch (error) {
     console.error("API Error:", error);
     return NextResponse.json(
