@@ -18,6 +18,7 @@ import LoadingCoach from "@/components/LoadingCoach";
 import ScheduleReminder from "@/components/ScheduleReminder";
 import JournalDrawer from "@/components/JournalDrawer";
 import Analytics from "@/components/Analytics";
+import SpotifyPlayer from "@/components/SpotifyPlayer";
 
 export default function Home() {
   const [screen, setScreen] = useState<AppScreen>("home");
@@ -216,6 +217,9 @@ export default function Home() {
           </>
         )}
       </main>
+
+      {/* Floating Spotify Player */}
+      <SpotifyPlayer />
     </div>
   );
 }
