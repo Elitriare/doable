@@ -4,14 +4,21 @@ import { authOptions } from "@/lib/auth";
 import { getDb } from "@/lib/mongodb";
 import webPush from "web-push";
 
-webPush.setVapidDetails(
-  "mailto:doable@example.com",
-  process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
-  process.env.VAPID_PRIVATE_KEY!
-);
+let vapidConfigured = false;
+function ensureVapid() {
+  if (vapidConfigured) return;
+  const pub = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+  const priv = process.env.VAPID_PRIVATE_KEY;
+  if (!pub || !priv) throw new Error("VAPID keys not configured");
+  webPush.setVapidDetails("mailto:doable@example.com", pub, priv);
+  vapidConfigured = true;
+}
 
 // POST — send a push notification to the current user's devices
 export async function POST(req: NextRequest) {
+  try { ensureVapid(); } catch {
+    return NextResponse.json({ error: "Push not configured" }, { status: 503 });
+  }
   const session = await getServerSession(authOptions);
   if (!session?.user?.email) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });

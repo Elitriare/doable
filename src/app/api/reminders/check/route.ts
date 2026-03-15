@@ -2,15 +2,23 @@ import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/mongodb";
 import webPush from "web-push";
 
-webPush.setVapidDetails(
-  "mailto:doable@example.com",
-  process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
-  process.env.VAPID_PRIVATE_KEY!
-);
+let vapidConfigured = false;
+function ensureVapid() {
+  if (vapidConfigured) return;
+  const pub = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+  const priv = process.env.VAPID_PRIVATE_KEY;
+  if (!pub || !priv) throw new Error("VAPID keys not configured");
+  webPush.setVapidDetails("mailto:doable@example.com", pub, priv);
+  vapidConfigured = true;
+}
 
 // POST — check for due reminders and send push notifications
 // This can be called by Vercel Cron or a client-side poll
 export async function POST(req: NextRequest) {
+  try { ensureVapid(); } catch {
+    return NextResponse.json({ error: "Push not configured" }, { status: 503 });
+  }
+
   // Simple auth: check for a secret header or allow from same origin
   const authHeader = req.headers.get("authorization");
   const cronSecret = process.env.CRON_SECRET;
