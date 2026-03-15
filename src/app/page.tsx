@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 import { AppScreen, AppTab, BlockerType, Task, Step, JournalEntryData } from "@/types";
 import { saveTask, getActiveTask, pullTasksFromDb, pushAllTasksToDb } from "@/lib/storage";
 import {
@@ -203,26 +203,36 @@ export default function Home() {
     <div className="min-h-screen flex flex-col">
       {/* Tab Navigation */}
       {showTabs && (
-        <nav className="flex justify-center gap-1 pt-6 pb-2 px-4">
+        <nav className="flex items-center justify-between pt-6 pb-2 px-4">
+          <div className="w-16" />
+          <div className="flex gap-1">
+            <button
+              onClick={() => setActiveTab("coach")}
+              className={`px-6 py-2 rounded-full text-sm font-semibold transition-all cursor-pointer ${
+                activeTab === "coach"
+                  ? "bg-[#4a8fe7] text-white shadow-md"
+                  : "bg-white/50 text-[#5a7fa8] hover:bg-white/70"
+              }`}
+            >
+              Coach
+            </button>
+            <button
+              onClick={() => setActiveTab("analytics")}
+              className={`px-6 py-2 rounded-full text-sm font-semibold transition-all cursor-pointer ${
+                activeTab === "analytics"
+                  ? "bg-[#4a8fe7] text-white shadow-md"
+                  : "bg-white/50 text-[#5a7fa8] hover:bg-white/70"
+              }`}
+            >
+              Analytics
+            </button>
+          </div>
           <button
-            onClick={() => setActiveTab("coach")}
-            className={`px-6 py-2 rounded-full text-sm font-semibold transition-all cursor-pointer ${
-              activeTab === "coach"
-                ? "bg-[#4a8fe7] text-white shadow-md"
-                : "bg-white/50 text-[#5a7fa8] hover:bg-white/70"
-            }`}
+            onClick={() => signOut()}
+            className="text-xs text-[#5a7fa8] hover:text-[#2e6dc0] transition-colors cursor-pointer px-2 py-1"
+            title={session.user?.email || "Sign out"}
           >
-            Coach
-          </button>
-          <button
-            onClick={() => setActiveTab("analytics")}
-            className={`px-6 py-2 rounded-full text-sm font-semibold transition-all cursor-pointer ${
-              activeTab === "analytics"
-                ? "bg-[#4a8fe7] text-white shadow-md"
-                : "bg-white/50 text-[#5a7fa8] hover:bg-white/70"
-            }`}
-          >
-            Analytics
+            Sign out
           </button>
         </nav>
       )}
