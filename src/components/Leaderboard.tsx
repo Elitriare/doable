@@ -28,13 +28,14 @@ export default function Leaderboard() {
 
   const [fetchError, setFetchError] = useState("");
 
-  const fetchLeaderboard = async () => {
+  const fetchLeaderboard = async (isInitial = false) => {
+    if (isInitial) setLoading(true);
     try {
       const res = await fetch("/api/friends");
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
         setFetchError(errData.error || `API error ${res.status}`);
-        setLoading(false);
+        if (isInitial) setLoading(false);
         return;
       }
       const data = await res.json();
@@ -45,7 +46,7 @@ export default function Leaderboard() {
     } catch (err) {
       setFetchError(err instanceof Error ? err.message : "Network error");
     }
-    setLoading(false);
+    if (isInitial) setLoading(false);
   };
 
   useEffect(() => {
@@ -53,7 +54,7 @@ export default function Leaderboard() {
       setLoading(false);
       return;
     }
-    fetchLeaderboard();
+    fetchLeaderboard(true);
   }, [session]);
 
   const handleAddFriend = async () => {
@@ -149,7 +150,7 @@ export default function Leaderboard() {
       {/* Add Friend */}
       <div className="bg-white/70 backdrop-blur rounded-2xl border border-[#b8d4ed] p-4">
         <p className="text-sm font-semibold text-[#1f3a5c] mb-2">Add a friend</p>
-        <div className="flex gap-2">
+        <form onSubmit={(e) => { e.preventDefault(); handleAddFriend(); }} className="flex gap-2">
           <input
             type="text"
             value={inputCode}
@@ -162,13 +163,13 @@ export default function Leaderboard() {
             className="flex-1 px-4 py-2 rounded-xl border border-[#b8d4ed] bg-white text-[#1f3a5c] text-sm font-mono tracking-widest uppercase placeholder:text-[#5a7fa8] placeholder:tracking-normal placeholder:font-sans focus:outline-none focus:ring-2 focus:ring-[#4a8fe7]/30"
           />
           <button
-            onClick={handleAddFriend}
+            type="submit"
             disabled={inputCode.length < 4}
             className="px-5 py-2 rounded-xl font-bold text-sm text-white bg-[#4a8fe7] hover:bg-[#3a7dd4] disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
           >
             Add
           </button>
-        </div>
+        </form>
         {addError && <p className="text-xs text-red-500 mt-2">{addError}</p>}
         {addSuccess && <p className="text-xs text-green-600 mt-2">{addSuccess}</p>}
       </div>
