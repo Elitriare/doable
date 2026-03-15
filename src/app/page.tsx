@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { AppScreen, AppTab, BlockerType, Task, Step, JournalEntryData } from "@/types";
-import { saveTask } from "@/lib/storage";
+import { saveTask, getActiveTask } from "@/lib/storage";
 import {
   registerServiceWorker,
   requestNotificationPermission,
@@ -28,8 +28,16 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  // Restore active session on mount (survives page reload)
   useEffect(() => {
     registerServiceWorker().then(() => requestNotificationPermission());
+
+    const active = getActiveTask();
+    if (active) {
+      setCurrentTask(active);
+      setTaskTitle(active.title);
+      setScreen("coaching");
+    }
   }, []);
 
   const handleVisibilityChange = useCallback(() => {

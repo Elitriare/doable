@@ -37,6 +37,11 @@ export function getRandomReward(): string {
   return rewards[Math.floor(Math.random() * rewards.length)];
 }
 
+export function getActiveTask(): Task | null {
+  const tasks = getTasks();
+  return tasks.find((t) => !t.completed && t.startedAt) || null;
+}
+
 // --- Analytics helpers ---
 
 export function getCompletedTasks(): Task[] {
