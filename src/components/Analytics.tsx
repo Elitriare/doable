@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   BarChart,
   Bar,
@@ -22,7 +22,7 @@ import {
   getBlockerDistribution,
   getActivityHeatmap,
 } from "@/lib/storage";
-import { Task } from "@/types";
+import { Task, JournalEntryData } from "@/types";
 
 const BLOCKER_LABELS: Record<string, string> = {
   "too-big": "Too Big",
@@ -32,7 +32,7 @@ const BLOCKER_LABELS: Record<string, string> = {
   "low-energy": "Low Energy",
 };
 
-const PIE_COLORS = ["#8b5cf6", "#d946ef", "#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#6366f1"];
+const PIE_COLORS = ["#abd9ff", "#c4b7e3", "#fce7bd", "#87c6fa", "#97cffc", "#65b5f7", "#758af5"];
 
 function formatDuration(ms: number): string {
   if (ms < 60000) return `${Math.round(ms / 1000)}s`;
@@ -69,10 +69,10 @@ function OverviewCards({
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: i * 0.05 }}
-          className="bg-white/80 backdrop-blur rounded-2xl p-4 text-center border border-white/50"
+          className="bg-blue-900/60 backdrop-blur rounded-2xl p-4 text-center border border-white/20"
         >
-          <div className="text-2xl font-bold text-violet-600">{card.value}</div>
-          <div className="text-xs text-gray-500 mt-1">{card.label}</div>
+          <div className="text-2xl font-bold text-[#abd9ff]">{card.value}</div>
+          <div className="text-xs text-[#97cffc] mt-1">{card.label}</div>
         </motion.div>
       ))}
     </div>
@@ -94,12 +94,12 @@ function StudyTimeChart({ data }: { data: Record<string, number> }) {
       <ResponsiveContainer width="100%" height={200}>
         <BarChart data={chartData} layout="vertical" margin={{ left: 10 }}>
           <XAxis type="number" hide />
-          <YAxis type="category" dataKey="name" width={90} tick={{ fill: "#6b7280", fontSize: 12 }} />
+          <YAxis type="category" dataKey="name" width={90} tick={{ fill: "#97cffc", fontSize: 12 }} />
           <Tooltip
             formatter={(value) => [`${value} min`, "Time"]}
-            contentStyle={{ background: "#fff", border: "1px solid #e5e7eb", borderRadius: 12, fontSize: 12 }}
+            contentStyle={{ background: "#1e3a5f", border: "1px solid rgba(255,255,255,0.2)", borderRadius: 12, fontSize: 12, color: "#abd9ff" }}
           />
-          <Bar dataKey="minutes" fill="#8b5cf6" radius={[0, 8, 8, 0]} />
+          <Bar dataKey="minutes" fill="#abd9ff" radius={[0, 8, 8, 0]} />
         </BarChart>
       </ResponsiveContainer>
     </Section>
@@ -136,7 +136,7 @@ function BlockerChart({ data }: { data: Record<string, number> }) {
             ))}
           </Pie>
           <Tooltip
-            contentStyle={{ background: "#fff", border: "1px solid #e5e7eb", borderRadius: 12, fontSize: 12 }}
+            contentStyle={{ background: "#1e3a5f", border: "1px solid rgba(255,255,255,0.2)", borderRadius: 12, fontSize: 12, color: "#abd9ff" }}
           />
         </PieChart>
       </ResponsiveContainer>
@@ -146,14 +146,12 @@ function BlockerChart({ data }: { data: Record<string, number> }) {
 
 // --- Activity Heatmap ---
 function ActivityHeatmap({ data }: { data: Record<string, number> }) {
-  // Show last 12 weeks (84 days)
   const weeks: { date: string; ms: number; dayOfWeek: number }[][] = [];
   const now = new Date();
 
-  // Find the most recent Sunday to align the grid
   const startOffset = now.getDay();
   const gridStart = new Date(now);
-  gridStart.setDate(gridStart.getDate() - startOffset - 83); // 12 weeks back
+  gridStart.setDate(gridStart.getDate() - startOffset - 83);
 
   let currentWeek: { date: string; ms: number; dayOfWeek: number }[] = [];
   for (let i = 0; i < 84 + startOffset + 1; i++) {
@@ -173,10 +171,10 @@ function ActivityHeatmap({ data }: { data: Record<string, number> }) {
   const maxMs = Math.max(...Object.values(data), 1);
 
   function getColor(ms: number): string {
-    if (ms === 0) return "rgba(139, 92, 246, 0.08)";
+    if (ms === 0) return "rgba(171, 217, 255, 0.08)";
     const intensity = Math.min(ms / maxMs, 1);
     const alpha = 0.2 + intensity * 0.8;
-    return `rgba(139, 92, 246, ${alpha})`;
+    return `rgba(171, 217, 255, ${alpha})`;
   }
 
   return (
@@ -199,7 +197,7 @@ function ActivityHeatmap({ data }: { data: Record<string, number> }) {
           </div>
         ))}
       </div>
-      <div className="flex items-center justify-center gap-2 mt-3 text-xs text-gray-400">
+      <div className="flex items-center justify-center gap-2 mt-3 text-xs text-[#97cffc]">
         <span>Less</span>
         {[0, 0.25, 0.5, 0.75, 1].map((intensity) => (
           <div
@@ -209,12 +207,103 @@ function ActivityHeatmap({ data }: { data: Record<string, number> }) {
               width: 10,
               height: 10,
               backgroundColor: intensity === 0
-                ? "rgba(139, 92, 246, 0.08)"
-                : `rgba(139, 92, 246, ${0.2 + intensity * 0.8})`,
+                ? "rgba(171, 217, 255, 0.08)"
+                : `rgba(171, 217, 255, ${0.2 + intensity * 0.8})`,
             }}
           />
         ))}
         <span>More</span>
+      </div>
+    </Section>
+  );
+}
+
+// --- Journal Gallery ---
+function JournalGallery({ tasks }: { tasks: Task[] }) {
+  const [expandedTask, setExpandedTask] = useState<string | null>(null);
+
+  const tasksWithJournals = tasks
+    .filter((t) => t.journal && t.journal.length > 0)
+    .sort((a, b) => (b.completedAt || 0) - (a.completedAt || 0));
+
+  if (tasksWithJournals.length === 0) {
+    return <EmptyState message="Complete tasks with photos to build your journal" />;
+  }
+
+  return (
+    <Section title="Your Journey">
+      <div className="space-y-3">
+        {tasksWithJournals.map((task) => (
+          <div key={task.id}>
+            <button
+              onClick={() => setExpandedTask(expandedTask === task.id ? null : task.id)}
+              className="w-full flex items-center gap-3 text-left cursor-pointer hover:bg-white/5 rounded-xl p-2 transition-colors"
+            >
+              {task.journal[0]?.photo && (
+                <img
+                  src={task.journal[0].photo}
+                  alt=""
+                  className="w-12 h-12 rounded-lg object-cover shrink-0"
+                />
+              )}
+              <div className="min-w-0 flex-1">
+                <div className="text-sm font-medium text-white truncate">{task.title}</div>
+                <div className="text-xs text-[#97cffc] flex items-center gap-2 mt-0.5">
+                  <span className="bg-[#abd9ff]/20 text-[#abd9ff] px-2 py-0.5 rounded-full text-[10px] font-medium">
+                    {task.category || "Uncategorized"}
+                  </span>
+                  <span>{task.journal.length} entries</span>
+                </div>
+              </div>
+              <span className="text-[#97cffc] text-sm">
+                {expandedTask === task.id ? "▲" : "▼"}
+              </span>
+            </button>
+
+            <AnimatePresence>
+              {expandedTask === task.id && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="overflow-hidden"
+                >
+                  <div className="space-y-3 pt-2 pl-2">
+                    {task.journal.map((entry: JournalEntryData, i: number) => (
+                      <div
+                        key={i}
+                        className="bg-blue-900/40 border border-white/10 rounded-2xl overflow-hidden"
+                      >
+                        {entry.photo && (
+                          <img
+                            src={entry.photo}
+                            alt={`Step ${i + 1}`}
+                            className="w-full h-32 object-cover"
+                          />
+                        )}
+                        <div className="p-3">
+                          <div className="flex items-center gap-2 mb-2">
+                            <div className="w-5 h-5 rounded-full bg-[#abd9ff]/20 border border-[#abd9ff]/40 flex items-center justify-center shrink-0">
+                              <span className="text-[#abd9ff] text-xs font-bold">{i + 1}</span>
+                            </div>
+                            <p className="text-[#97cffc] text-xs truncate">{entry.stepText}</p>
+                          </div>
+                          {entry.reflection && (
+                            <p className="text-[#abd9ff] text-xs leading-relaxed italic">{entry.reflection}</p>
+                          )}
+                          <p className="text-[#758af5] text-xs mt-2">
+                            {new Date(entry.completedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        ))}
       </div>
     </Section>
   );
@@ -237,21 +326,24 @@ function RecentSessions({ tasks }: { tasks: Task[] }) {
         {recent.map((task) => (
           <div
             key={task.id}
-            className="flex items-center justify-between bg-white/60 rounded-xl px-4 py-3 border border-white/50"
+            className="flex items-center justify-between bg-blue-900/40 rounded-xl px-4 py-3 border border-white/10"
           >
             <div className="min-w-0 flex-1">
-              <div className="text-sm font-medium text-gray-800 truncate">{task.title}</div>
-              <div className="text-xs text-gray-400 flex items-center gap-2 mt-0.5">
-                <span className="bg-violet-100 text-violet-600 px-2 py-0.5 rounded-full text-[10px] font-medium">
+              <div className="text-sm font-medium text-white truncate">{task.title}</div>
+              <div className="text-xs text-[#97cffc] flex items-center gap-2 mt-0.5">
+                <span className="bg-[#abd9ff]/20 text-[#abd9ff] px-2 py-0.5 rounded-full text-[10px] font-medium">
                   {task.category || "Uncategorized"}
                 </span>
                 <span>{task.steps.length} steps</span>
+                {task.journal && task.journal.length > 0 && (
+                  <span>{task.journal.length} photos</span>
+                )}
                 {task.startedAt && task.completedAt && (
                   <span>{formatDuration(task.completedAt - task.startedAt)}</span>
                 )}
               </div>
             </div>
-            <div className="text-xs text-gray-400 ml-3 whitespace-nowrap">
+            <div className="text-xs text-[#758af5] ml-3 whitespace-nowrap">
               {task.completedAt ? new Date(task.completedAt).toLocaleDateString() : ""}
             </div>
           </div>
@@ -267,9 +359,9 @@ function Section({ title, children }: { title: string; children: React.ReactNode
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white/80 backdrop-blur rounded-2xl p-5 border border-white/50"
+      className="bg-blue-900/40 backdrop-blur rounded-2xl p-5 border border-white/20"
     >
-      <h3 className="text-sm font-semibold text-gray-600 mb-4">{title}</h3>
+      <h3 className="text-sm font-semibold text-[#abd9ff] mb-4">{title}</h3>
       {children}
     </motion.div>
   );
@@ -277,8 +369,8 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 function EmptyState({ message }: { message: string }) {
   return (
-    <div className="bg-white/80 backdrop-blur rounded-2xl p-8 border border-white/50 text-center">
-      <p className="text-sm text-gray-400">{message}</p>
+    <div className="bg-blue-900/40 backdrop-blur rounded-2xl p-8 border border-white/20 text-center">
+      <p className="text-sm text-[#97cffc]">{message}</p>
     </div>
   );
 }
@@ -304,7 +396,7 @@ export default function Analytics() {
   return (
     <div className="w-full max-w-lg mx-auto space-y-4">
       <motion.h2
-        className="text-2xl font-bold text-center text-violet-600"
+        className="text-2xl font-bold text-center text-[#abd9ff]"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
       >
@@ -321,6 +413,7 @@ export default function Analytics() {
       <StudyTimeChart data={studyByCategory} />
       <BlockerChart data={blockerDist} />
       <ActivityHeatmap data={heatmap} />
+      <JournalGallery tasks={completedTasks} />
       <RecentSessions tasks={completedTasks} />
     </div>
   );
