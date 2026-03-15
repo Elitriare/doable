@@ -12,6 +12,23 @@ export interface BlockerOption {
   description: string;
 }
 
+// Updated step shape from AI breakdown
+export interface Step {
+  step: string;
+  journalPrompt: string;
+  estimatedMinutes: number;
+}
+
+// Journal entry saved after each step
+export interface JournalEntryData {
+  stepIndex: number;
+  stepText: string;
+  photo: string;
+  caption: string;
+  reflection: string;
+  completedAt: number;
+}
+
 export interface MicroStep {
   id: number;
   text: string;
@@ -22,10 +39,11 @@ export interface Task {
   id: string;
   title: string;
   blocker: BlockerType;
-  steps: MicroStep[];
+  steps: Step[];
   currentStep: number;
   completed: boolean;
   createdAt: number;
+  journal: JournalEntryData[];
 }
 
 export interface ScheduledReminder {
@@ -42,4 +60,5 @@ export type AppScreen =
   | "home"
   | "blocker"
   | "coaching"
-  | "complete";
+  | "complete"
+  | "journey";

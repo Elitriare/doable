@@ -1,16 +1,18 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import ProofUpload from "./ProofUpload";
+import JournalEntry from "./JournalEntry";
+import { JournalEntryData } from "@/types";
 
 interface StepCardProps {
   step: string;
+  journalPrompt: string;
   stepNumber: number;
   totalSteps: number;
-  onDone: () => void;
+  onDone: (entry: Omit<JournalEntryData, "stepIndex" | "stepText" | "completedAt">) => void;
 }
 
-export default function StepCard({ step, stepNumber, totalSteps, onDone }: StepCardProps) {
+export default function StepCard({ step, journalPrompt, stepNumber, totalSteps, onDone }: StepCardProps) {
   return (
     <AnimatePresence mode="wait">
       <motion.div
@@ -21,19 +23,20 @@ export default function StepCard({ step, stepNumber, totalSteps, onDone }: StepC
         transition={{ duration: 0.3 }}
         className="w-full max-w-lg mx-auto"
       >
-        <div className="bg-gray-900 border border-gray-800 rounded-3xl p-8 text-center">
-          <div className="text-sm text-violet-400 font-medium mb-4">
+        <div className="bg-gray-900 border border-gray-800 rounded-3xl p-8">
+          <div className="text-sm text-violet-400 font-medium mb-4 text-center">
             FOCUS ON THIS
           </div>
-          <p className="text-xl font-semibold text-white mb-8 leading-relaxed">
+          <p className="text-xl font-semibold text-white mb-8 leading-relaxed text-center">
             {step}
           </p>
-          <div className="text-left">
-            <ProofUpload
-              step={step}
-              onComplete={() => onDone()}
-            />
-          </div>
+          <JournalEntry
+            step={step}
+            journalPrompt={journalPrompt}
+            stepNumber={stepNumber}
+            totalSteps={totalSteps}
+            onComplete={onDone}
+          />
         </div>
       </motion.div>
     </AnimatePresence>

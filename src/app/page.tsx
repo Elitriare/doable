@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { AppScreen, BlockerType, Task } from "@/types";
+import { AppScreen, BlockerType, Task, Step, JournalEntryData } from "@/types";
 import { saveTask } from "@/lib/storage";
 import {
   registerServiceWorker,
@@ -16,6 +16,7 @@ import ProgressBar from "@/components/ProgressBar";
 import Celebration from "@/components/Celebration";
 import LoadingCoach from "@/components/LoadingCoach";
 import ScheduleReminder from "@/components/ScheduleReminder";
+import JournalDrawer from "@/components/JournalDrawer";
 
 export default function Home() {
   const [screen, setScreen] = useState<AppScreen>("home");
@@ -24,12 +25,10 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // Register service worker and request notification permission on mount
   useEffect(() => {
     registerServiceWorker().then(() => requestNotificationPermission());
   }, []);
 
-  // Schedule comeback notification when user leaves mid-session
   const handleVisibilityChange = useCallback(() => {
     if (document.hidden && screen === "coaching" && currentTask && !currentTask.completed) {
       const progress = `${Math.round((currentTask.currentStep / currentTask.steps.length) * 100)}%`;
@@ -72,14 +71,11 @@ export default function Home() {
         id: crypto.randomUUID(),
         title: taskTitle,
         blocker,
-        steps: data.steps.map((text: string, i: number) => ({
-          id: i,
-          text,
-          completed: false,
-        })),
+        steps: data.steps as Step[],
         currentStep: 0,
         completed: false,
         createdAt: Date.now(),
+        journal: [],
       };
 
       setCurrentTask(task);
@@ -92,26 +88,31 @@ export default function Home() {
     }
   };
 
-  const handleStepDone = () => {
+  const handleStepDone = (entry: Omit<JournalEntryData, "stepIndex" | "stepText" | "completedAt">) => {
     if (!currentTask) return;
 
-    const nextStep = currentTask.currentStep + 1;
+    const journalEntry: JournalEntryData = {
+      ...entry,
+      stepIndex: currentTask.currentStep,
+      stepText: currentTask.steps[currentTask.currentStep].step,
+      completedAt: Date.now(),
+    };
 
-    if (nextStep >= currentTask.steps.length) {
-      const completedTask = { ...currentTask, completed: true };
-      setCurrentTask(completedTask);
-      saveTask(completedTask);
+    const nextStep = currentTask.currentStep + 1;
+    const isLast = nextStep >= currentTask.steps.length;
+
+    const updatedTask: Task = {
+      ...currentTask,
+      currentStep: isLast ? currentTask.currentStep : nextStep,
+      completed: isLast,
+      journal: [...currentTask.journal, journalEntry],
+    };
+
+    setCurrentTask(updatedTask);
+    saveTask(updatedTask);
+
+    if (isLast) {
       setScreen("complete");
-    } else {
-      const updatedTask = {
-        ...currentTask,
-        currentStep: nextStep,
-        steps: currentTask.steps.map((s, i) =>
-          i < nextStep ? { ...s, completed: true } : s
-        ),
-      };
-      setCurrentTask(updatedTask);
-      saveTask(updatedTask);
     }
   };
 
@@ -122,6 +123,8 @@ export default function Home() {
     setError("");
     setScreen("home");
   };
+
+  const currentStep = currentTask?.steps[currentTask.currentStep];
 
   return (
     <main className="min-h-screen flex flex-col items-center justify-center px-6 py-12">
@@ -142,14 +145,15 @@ export default function Home() {
 
       {screen === "coaching" && loading && <LoadingCoach />}
 
-      {screen === "coaching" && !loading && currentTask && (
+      {screen === "coaching" && !loading && currentTask && currentStep && (
         <div className="w-full max-w-lg mx-auto space-y-8">
           <ProgressBar
             current={currentTask.currentStep}
             total={currentTask.steps.length}
           />
           <StepCard
-            step={currentTask.steps[currentTask.currentStep].text}
+            step={currentStep.step}
+            journalPrompt={currentStep.journalPrompt}
             stepNumber={currentTask.currentStep + 1}
             totalSteps={currentTask.steps.length}
             onDone={handleStepDone}
@@ -160,6 +164,7 @@ export default function Home() {
           >
             Start over
           </button>
+          <JournalDrawer entries={currentTask.journal} />  {/* 👈 add this */}
         </div>
       )}
 

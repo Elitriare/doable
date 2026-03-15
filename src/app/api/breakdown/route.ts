@@ -3,30 +3,97 @@ import { NextRequest, NextResponse } from "next/server";
 import { BlockerType } from "@/types";
 
 const blockerPrompts: Record<BlockerType, string> = {
-  "too-big": `The user feels overwhelmed because this task feels too big.
-Break it into very small, concrete micro-steps (each should take 2-5 minutes max).
-Start with the absolute simplest action like "Open the document" or "Write one sentence".
-Make each step feel effortless and achievable.`,
+  "too-big": `The user feels overwhelmed because this task feels too big and daunting.
+Break it into 4-6 meaningful phases that each take 10-20 minutes.
+Make each phase feel like a real, satisfying chunk of progress.`,
 
-  "too-boring": `The user finds this task boring and tedious.
-Break it into short 5-minute sprint-sized chunks.
-Make steps feel quick and punchy. Add a sense of momentum.
-Frame steps as quick wins: "Knock out X in 5 minutes".`,
+  "too-boring": `The user finds this task boring and tedious — they just can't be bothered.
+Break it into 4-6 punchy, momentum-building phases.
+Frame each as a quick win. Keep the energy light and irreverent.`,
 
-  "no-idea": `The user doesn't know where to start with this task.
-Provide clear, specific first steps with guidance on what to do.
-Include brief context or tips for steps that might be unfamiliar.
-Start from absolute basics - assume they need orientation.`,
+  "no-idea": `The user doesn't know where to start — they feel lost and directionless.
+Break it into 4-6 clear phases with enough context that they know exactly what to do.
+Start from orientation and build toward completion.`,
 
-  "fear": `The user is scared of doing this task wrong.
-Frame everything as a draft, experiment, or first attempt - nothing is permanent.
-Include reassuring language. Emphasize that imperfect action beats no action.
-Start with low-stakes steps like research or outlining.`,
+  "fear": `The user is scared of doing this task wrong — perfectionism or fear of failure is blocking them.
+Break it into 4-6 low-stakes phases framed as drafts or experiments.
+Emphasise that imperfect action beats no action.`,
 
-  "low-energy": `The user has low energy right now.
-Make the first 2-3 steps extremely tiny (1-2 minutes each) to build momentum.
-Start with physical actions: "Stand up", "Open your laptop", "Open the app".
-Keep steps simple enough to do on autopilot.`,
+  "low-energy": `The user has low energy right now — they're tired and struggling to get going.
+Break it into 4-6 phases, starting very gently and building momentum gradually.
+Keep early phases simple and almost effortless.`,
+};
+
+const blockerExamples: Record<BlockerType, string> = {
+  "too-big": `Example for a "too-big" blocker:
+[
+  {
+    "step": "Break the task into a rough outline",
+    "journalPrompt": "This felt huge, so let's just shrink it down first — no doing yet, just mapping. Once you've got it on paper, snap a pic of your outline.",
+    "estimatedMinutes": 10
+  },
+  {
+    "step": "Tackle the first section only",
+    "journalPrompt": "You already made it smaller — now just eat the first bite. One section, that's it. Photo it when you're done.",
+    "estimatedMinutes": 20
+  }
+]`,
+
+  "too-boring": `Example for a "too-boring" blocker:
+[
+  {
+    "step": "Set a 10-minute timer and just start",
+    "journalPrompt": "Yeah it's boring, we're not going to pretend otherwise — but 10 minutes of boring is survivable. Set the timer and go. Snap a pic when it goes off.",
+    "estimatedMinutes": 10
+  },
+  {
+    "step": "Push through the next chunk",
+    "journalPrompt": "One round done — turns out boring tasks move faster than they look. Keep that going and knock out this next bit. Photo when done.",
+    "estimatedMinutes": 15
+  }
+]`,
+
+  "no-idea": `Example for a "no-idea" blocker:
+[
+  {
+    "step": "Do a quick 10-minute research sprint",
+    "journalPrompt": "You're not lost, you just haven't oriented yet — let's fix that first. Spend 10 minutes looking at examples or reading up. Snap a pic of your notes.",
+    "estimatedMinutes": 10
+  },
+  {
+    "step": "Write down a rough plan based on what you found",
+    "journalPrompt": "You've got more of an idea now than you did before — use that. Jot down a rough order of attack. Photo it when you're done.",
+    "estimatedMinutes": 15
+  }
+]`,
+
+  "fear": `Example for a "fear" blocker:
+[
+  {
+    "step": "Write a rough outline — nothing precious",
+    "journalPrompt": "You've been scared of getting this wrong, so let's take the pressure off — this is a draft that no one will ever see. Scribble something down and snap a pic.",
+    "estimatedMinutes": 15
+  },
+  {
+    "step": "Flesh out your first section",
+    "journalPrompt": "You already broke the seal — that outline was the hardest part and you did it. Now just expand one section, still no pressure. Photo it when done.",
+    "estimatedMinutes": 20
+  }
+]`,
+
+  "low-energy": `Example for a "low-energy" blocker:
+[
+  {
+    "step": "Just open everything you need",
+    "journalPrompt": "You don't have to do anything yet — just open the files, the tabs, the tools. That's the whole step. Snap a pic of your screen when it's all open.",
+    "estimatedMinutes": 5
+  },
+  {
+    "step": "Do the easiest part first",
+    "journalPrompt": "You're already in it — that's honestly the win. Now just pick the easiest thing on the list and do that one. Photo when done.",
+    "estimatedMinutes": 15
+  }
+]`,
 };
 
 export async function POST(request: NextRequest) {
@@ -51,21 +118,28 @@ export async function POST(request: NextRequest) {
     const client = new Anthropic({ apiKey });
 
     const message = await client.messages.create({
-      model: "claude-sonnet-4-20250514",
+      model: "claude-haiku-4-5-20251001",
       max_tokens: 1024,
       messages: [
         {
           role: "user",
-          content: `You are a supportive productivity coach helping someone get started on a task they've been putting off.
+          content: `You are a supportive productivity coach helping someone complete a task they've been putting off.
 
 ${blockerPrompts[blocker as BlockerType]}
 
 The user's task: "${task}"
 
-Generate 5-10 micro-steps to help them complete this task. Each step should be a single, concrete action.
+Generate 4-6 meaningful phases to guide them through this task.
 
-IMPORTANT: Respond with ONLY a JSON array of strings, each string being one step. No other text.
-Example: ["Step 1", "Step 2", "Step 3"]`,
+The journalPrompt for each step must:
+- For step 1: directly acknowledge the EXACT reason they're stuck ("${blocker}") and speak to that specific feeling before encouraging them in
+- For step 2+: build on the previous step — reference that they've already made progress and use that momentum
+- End with a natural nudge to snap a photo once done
+- Casual and warm, like a friend who gets it — not a corporate coach
+- 1-2 sentences max
+
+IMPORTANT: Respond with ONLY a JSON array of objects, no other text.
+${blockerExamples[blocker as BlockerType]}`,
         },
       ],
     });
@@ -78,7 +152,8 @@ Example: ["Step 1", "Step 2", "Step 3"]`,
       );
     }
 
-    const steps: string[] = JSON.parse(content.text);
+    const clean = content.text.replace(/```json|```/g, "").trim();
+    const steps = JSON.parse(clean);
 
     return NextResponse.json({ steps });
   } catch (error) {
