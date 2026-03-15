@@ -11,13 +11,37 @@ export async function GET() {
   }
 
   const db = await getDb();
-  const myProfile = await db.collection("profiles").findOne({ userEmail: session.user.email });
+  const existing = await db.collection("profiles").findOne({ userEmail: session.user.email });
 
-  if (!myProfile) {
-    return NextResponse.json({ leaderboard: [], friendCode: "" });
+  // Auto-create profile if it doesn't exist
+  let p: any;
+  if (!existing) {
+    p = {
+      userEmail: session.user.email,
+      rewards: [],
+      points: 0,
+      friendCode: crypto.randomUUID().slice(0, 6).toUpperCase(),
+      displayName: session.user.name || "Anonymous",
+      avatarUrl: session.user.image || "",
+      friends: [],
+      pointsHistory: [],
+    };
+    await db.collection("profiles").insertOne(p);
+  } else {
+    p = existing;
   }
 
-  const friendEmails: string[] = myProfile.friends || [];
+  // Backfill friendCode if missing on older profiles
+  if (!p.friendCode) {
+    const code = crypto.randomUUID().slice(0, 6).toUpperCase();
+    await db.collection("profiles").updateOne(
+      { userEmail: session.user.email },
+      { $set: { friendCode: code, points: p.points || 0, friends: p.friends || [], pointsHistory: p.pointsHistory || [] } }
+    );
+    p.friendCode = code;
+  }
+
+  const friendEmails: string[] = p.friends || [];
 
   // Fetch friends' profiles
   let friendProfiles: any[] = [];
@@ -32,9 +56,9 @@ export async function GET() {
   // Build leaderboard including self
   const leaderboard = [
     {
-      displayName: myProfile.displayName || session.user.name || "You",
-      avatarUrl: myProfile.avatarUrl || session.user.image || "",
-      points: myProfile.points || 0,
+      displayName: p.displayName || session.user.name || "You",
+      avatarUrl: p.avatarUrl || session.user.image || "",
+      points: p.points || 0,
       isYou: true,
     },
     ...friendProfiles.map((f: any) => ({
@@ -47,9 +71,9 @@ export async function GET() {
 
   return NextResponse.json({
     leaderboard,
-    friendCode: myProfile.friendCode || "",
-    points: myProfile.points || 0,
-    pointsHistory: myProfile.pointsHistory || [],
+    friendCode: p.friendCode || "",
+    points: p.points || 0,
+    pointsHistory: p.pointsHistory || [],
   });
 }
 
@@ -82,8 +106,8 @@ export async function POST(req: NextRequest) {
     }
 
     // Check if already friends
-    const myProfile = await db.collection("profiles").findOne({ userEmail: session.user.email });
-    if (myProfile?.friends?.includes(friendProfile.userEmail)) {
+    const profile = await db.collection("profiles").findOne({ userEmail: session.user.email });
+    if (profile?.friends?.includes(friendProfile.userEmail)) {
       return NextResponse.json({ error: "Already friends!" }, { status: 400 });
     }
 
