@@ -1,5 +1,8 @@
 import { AuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
+import CredentialsProvider from "next-auth/providers/credentials";
+import bcrypt from "bcryptjs";
+import { getDb } from "@/lib/mongodb";
 
 export const authOptions: AuthOptions = {
   providers: [
@@ -14,7 +17,45 @@ export const authOptions: AuthOptions = {
         },
       },
     }),
+    CredentialsProvider({
+      name: "credentials",
+      credentials: {
+        email: { label: "Email", type: "email" },
+        password: { label: "Password", type: "password" },
+      },
+      async authorize(credentials) {
+        if (!credentials?.email || !credentials?.password) {
+          throw new Error("Email and password are required");
+        }
+
+        const db = await getDb();
+        const user = await db.collection("users").findOne({
+          email: credentials.email.toLowerCase().trim(),
+        });
+
+        if (!user) {
+          throw new Error("No account found with this email");
+        }
+
+        const isValid = await bcrypt.compare(credentials.password, user.password);
+        if (!isValid) {
+          throw new Error("Incorrect password");
+        }
+
+        return {
+          id: user._id.toString(),
+          name: user.name,
+          email: user.email,
+        };
+      },
+    }),
   ],
+  session: {
+    strategy: "jwt",
+  },
+  pages: {
+    signIn: "/", // we handle sign-in UI ourselves
+  },
   callbacks: {
     async jwt({ token, account }) {
       if (account) {

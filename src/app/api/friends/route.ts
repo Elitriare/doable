@@ -3,12 +3,15 @@ import { NextRequest, NextResponse } from "next/server";
 import { authOptions } from "@/lib/auth";
 import { getDb } from "@/lib/mongodb";
 
-// Generate a simple 6-char code
+import crypto from "crypto";
+
+// Generate a cryptographically secure 6-char code
 function generateCode(): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no ambiguous chars
+  const bytes = crypto.randomBytes(6);
   let code = "";
   for (let i = 0; i < 6; i++) {
-    code += chars[Math.floor(Math.random() * chars.length)];
+    code += chars[bytes[i] % chars.length];
   }
   return code;
 }
@@ -89,7 +92,7 @@ export async function GET() {
   } catch (err) {
     console.error("Friends API error:", err);
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : "Internal server error" },
+      { error: "Internal server error" },
       { status: 500 }
     );
   }

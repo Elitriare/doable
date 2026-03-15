@@ -110,10 +110,14 @@ export async function POST(request: NextRequest) {
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) {
       return NextResponse.json(
-        { error: "API key not configured. Set ANTHROPIC_API_KEY in .env.local" },
+        { error: "Service temporarily unavailable" },
         { status: 500 }
       );
     }
+
+    // Sanitize inputs — limit length to prevent abuse
+    const safeTask = String(task).slice(0, 500);
+    const safeBlocker = String(blocker).slice(0, 50);
 
     const client = new Anthropic({ apiKey });
 
@@ -125,9 +129,9 @@ export async function POST(request: NextRequest) {
           role: "user",
           content: `You are a supportive productivity coach helping someone complete a task they've been putting off.
 
-${blockerPrompts[blocker as BlockerType]}
+${blockerPrompts[safeBlocker as BlockerType] || blockerPrompts["too-big"]}
 
-The user's task: "${task}"
+The user's task: "${safeTask}"
 
 Generate the RIGHT number of steps for this task — no more, no less.
 - Quick tasks (reply to email, make a call, tidy desk): 2-3 steps
@@ -136,7 +140,7 @@ Generate the RIGHT number of steps for this task — no more, no less.
 Every step must represent REAL progress. Never pad with filler like "open your laptop" or "take a deep breath" unless the blocker is low-energy. If the task is simple, 2-3 steps is perfect — don't stretch it.
 
 The journalPrompt for each step must:
-- For step 1: directly acknowledge the EXACT reason they're stuck ("${blocker}") and speak to that specific feeling before encouraging them in
+- For step 1: directly acknowledge the EXACT reason they're stuck ("${safeBlocker}") and speak to that specific feeling before encouraging them in
 - For step 2+: build on the previous step — reference that they've already made progress and use that momentum
 - End with a natural nudge to snap a photo once done
 - Casual and warm, like a friend who gets it — not a corporate coach
@@ -147,7 +151,7 @@ Also suggest a short category label for this task (e.g. "Math", "English", "Work
 IMPORTANT: Respond with ONLY a JSON object like this, no other text:
 {"steps": [{"step": "...", "journalPrompt": "...", "estimatedMinutes": 10}, ...], "category": "Work"}
 
-${blockerExamples[blocker as BlockerType]}`,
+${blockerExamples[safeBlocker as BlockerType] || blockerExamples["too-big"]}`,
         },
       ],
     });

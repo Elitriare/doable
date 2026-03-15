@@ -1,22 +1,175 @@
 "use client";
 
 import { signIn } from "next-auth/react";
+import { useState } from "react";
+import { motion } from "framer-motion";
 
 export default function LoginScreen() {
+  const [mode, setMode] = useState<"login" | "signup">("login");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleCredentialSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+
+    try {
+      if (mode === "signup") {
+        // Step 1: Create the account
+        const res = await fetch("/api/auth/signup", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name, email, password }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          setError(data.error || "Signup failed");
+          setLoading(false);
+          return;
+        }
+      }
+
+      // Step 2: Sign in with credentials
+      const result = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+      });
+
+      if (result?.error) {
+        setError(
+          result.error === "CredentialsSignin"
+            ? "Invalid email or password"
+            : result.error
+        );
+        setLoading(false);
+        return;
+      }
+
+      // Success — NextAuth will update the session and re-render
+      window.location.reload();
+    } catch {
+      setError("Something went wrong. Please try again.");
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-6">
-      <div className="text-center max-w-md">
-        {/* Mascot placeholder */}
-        <div className="text-6xl mb-6">🎯</div>
+      <div className="text-center max-w-md w-full">
+        {/* Mascot */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <img
+            src="/images/B4.png"
+            alt="Doable mascot"
+            className="w-48 h-auto mx-auto mb-4"
+          />
+        </motion.div>
 
-        <h1 className="text-3xl font-bold text-[#1f3a5c] mb-3">
-          Welcome to Doable
-        </h1>
-        <p className="text-[#5a7fa8] mb-8 leading-relaxed">
-          Your AI coach that turns overwhelming tasks into doable steps.
-          Sign in to save your progress across devices.
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2, duration: 0.4 }}
+        >
+          <h1 className="text-3xl font-bold text-[#1f3a5c] mb-3">
+            Welcome to Doable
+          </h1>
+          <p className="text-[#5a7fa8] mb-8 leading-relaxed">
+            Your AI coach that turns overwhelming tasks into doable steps.
+            {mode === "login" ? " Sign in to continue." : " Create an account to get started."}
+          </p>
+        </motion.div>
+
+        {/* Credential Form */}
+        <form onSubmit={handleCredentialSubmit} className="space-y-3 mb-4">
+          {mode === "signup" && (
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Full name"
+              required
+              className="w-full px-4 py-3 rounded-2xl border border-[#b8d4ed] bg-white text-[#1f3a5c] text-sm placeholder:text-[#5a7fa8] focus:outline-none focus:ring-2 focus:ring-[#4a8fe7]/30"
+            />
+          )}
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="Email address"
+            required
+            className="w-full px-4 py-3 rounded-2xl border border-[#b8d4ed] bg-white text-[#1f3a5c] text-sm placeholder:text-[#5a7fa8] focus:outline-none focus:ring-2 focus:ring-[#4a8fe7]/30"
+          />
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder={mode === "signup" ? "Password (min 8 characters)" : "Password"}
+            required
+            minLength={mode === "signup" ? 8 : undefined}
+            className="w-full px-4 py-3 rounded-2xl border border-[#b8d4ed] bg-white text-[#1f3a5c] text-sm placeholder:text-[#5a7fa8] focus:outline-none focus:ring-2 focus:ring-[#4a8fe7]/30"
+          />
+
+          {error && (
+            <p className="text-xs text-red-500 bg-red-50 rounded-xl px-4 py-2">
+              {error}
+            </p>
+          )}
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full py-3 px-6 rounded-2xl font-semibold text-white bg-[#4a8fe7] hover:bg-[#3a7dd4] disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer shadow-sm"
+          >
+            {loading
+              ? "Please wait..."
+              : mode === "signup"
+              ? "Create Account"
+              : "Sign In"}
+          </button>
+        </form>
+
+        {/* Toggle mode */}
+        <p className="text-sm text-[#5a7fa8] mb-6">
+          {mode === "login" ? (
+            <>
+              Don&apos;t have an account?{" "}
+              <button
+                onClick={() => { setMode("signup"); setError(""); }}
+                className="text-[#4a8fe7] font-semibold hover:underline cursor-pointer"
+              >
+                Sign up
+              </button>
+            </>
+          ) : (
+            <>
+              Already have an account?{" "}
+              <button
+                onClick={() => { setMode("login"); setError(""); }}
+                className="text-[#4a8fe7] font-semibold hover:underline cursor-pointer"
+              >
+                Sign in
+              </button>
+            </>
+          )}
         </p>
 
+        {/* Divider */}
+        <div className="flex items-center gap-3 mb-6">
+          <div className="flex-1 h-px bg-[#b8d4ed]" />
+          <span className="text-xs text-[#5a7fa8]">or</span>
+          <div className="flex-1 h-px bg-[#b8d4ed]" />
+        </div>
+
+        {/* Google Sign In */}
         <button
           onClick={() => signIn("google")}
           className="w-full flex items-center justify-center gap-3 py-3 px-6 rounded-2xl font-semibold text-[#1f3a5c] bg-white border border-[#b8d4ed] hover:bg-[#f0f6fc] transition-all cursor-pointer shadow-sm"
@@ -31,7 +184,7 @@ export default function LoginScreen() {
         </button>
 
         <p className="text-xs text-[#5a7fa8] mt-6">
-          Your data is synced securely with your Google account
+          Your data is synced securely across devices
         </p>
       </div>
     </div>

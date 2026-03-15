@@ -60,11 +60,24 @@ export async function POST(req: NextRequest) {
 
   const { profile } = await req.json();
 
+  // Whitelist only safe, user-editable fields to prevent mass assignment
+  const ALLOWED_FIELDS = ["rewards", "displayName", "avatarUrl"];
+  const safeUpdate: Record<string, any> = { userEmail: session.user.email };
+  for (const key of ALLOWED_FIELDS) {
+    if (profile[key] !== undefined) {
+      safeUpdate[key] = key === "displayName"
+        ? String(profile[key]).slice(0, 50).trim()
+        : key === "avatarUrl"
+        ? String(profile[key]).slice(0, 500)
+        : profile[key];
+    }
+  }
+
   const db = await getDb();
   await db.collection("profiles").updateOne(
     { userEmail: session.user.email },
     {
-      $set: { ...profile, userEmail: session.user.email },
+      $set: safeUpdate,
       $setOnInsert: {
         points: 0,
         friendCode: crypto.randomUUID().slice(0, 6).toUpperCase(),

@@ -2,6 +2,12 @@ import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { authOptions } from "@/lib/auth";
 import { getDb } from "@/lib/mongodb";
+import crypto from "crypto";
+
+// Allowed point deltas to prevent abuse
+const VALID_REASONS = ["step_complete", "task_complete", "streak_bonus", "first_today", "forfeit"];
+const MAX_DELTA = 50;
+const MIN_DELTA = -50;
 
 // POST — award or deduct points
 export async function POST(req: NextRequest) {
@@ -15,6 +21,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
   }
 
+  // Validate reason and clamp delta to prevent abuse
+  if (!VALID_REASONS.includes(reason)) {
+    return NextResponse.json({ error: "Invalid reason" }, { status: 400 });
+  }
+  const clampedDelta = Math.max(MIN_DELTA, Math.min(MAX_DELTA, Math.round(delta)));
+  const safeTitle = typeof taskTitle === "string" ? taskTitle.slice(0, 200) : "";
+
   const db = await getDb();
 
   // Ensure profile exists with points field
@@ -24,7 +37,7 @@ export async function POST(req: NextRequest) {
       $setOnInsert: {
         userEmail: session.user.email,
         points: 0,
-        friendCode: Math.random().toString(36).slice(2, 8).toUpperCase(),
+        friendCode: crypto.randomBytes(3).toString("hex").toUpperCase().slice(0, 6),
         displayName: session.user.name || "Anonymous",
         avatarUrl: session.user.image || "",
         friends: [],
@@ -39,10 +52,10 @@ export async function POST(req: NextRequest) {
   const result = await db.collection("profiles").findOneAndUpdate(
     { userEmail: session.user.email },
     {
-      $inc: { points: delta },
+      $inc: { points: clampedDelta },
       $push: {
         pointsHistory: {
-          $each: [{ delta, reason, taskTitle, timestamp: Date.now() }],
+          $each: [{ delta: clampedDelta, reason, taskTitle: safeTitle, timestamp: Date.now() }],
           $slice: -50, // keep last 50 entries
         },
       } as any,
