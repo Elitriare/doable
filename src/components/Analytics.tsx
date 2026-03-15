@@ -32,7 +32,7 @@ const BLOCKER_LABELS: Record<string, string> = {
   "low-energy": "Low Energy",
 };
 
-const PIE_COLORS = ["#abd9ff", "#c4b7e3", "#fce7bd", "#87c6fa", "#97cffc", "#65b5f7", "#758af5"];
+const PIE_COLORS = ["#4a8fe7", "#6ba3ed", "#3a7dd4", "#5c9ae8", "#2e6dc0", "#7db4f0", "#1f5ca8"];
 
 function formatDuration(ms: number): string {
   if (ms < 60000) return `${Math.round(ms / 1000)}s`;
@@ -69,10 +69,10 @@ function OverviewCards({
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: i * 0.05 }}
-          className="bg-blue-900/60 backdrop-blur rounded-2xl p-4 text-center border border-white/20"
+          className="bg-white/70 backdrop-blur rounded-2xl p-4 text-center border border-[#b8d4ed]"
         >
-          <div className="text-2xl font-bold text-[#abd9ff]">{card.value}</div>
-          <div className="text-xs text-[#97cffc] mt-1">{card.label}</div>
+          <div className="text-2xl font-bold text-[#2e6dc0]">{card.value}</div>
+          <div className="text-xs text-[#5a7fa8] mt-1">{card.label}</div>
         </motion.div>
       ))}
     </div>
@@ -94,12 +94,12 @@ function StudyTimeChart({ data }: { data: Record<string, number> }) {
       <ResponsiveContainer width="100%" height={200}>
         <BarChart data={chartData} layout="vertical" margin={{ left: 10 }}>
           <XAxis type="number" hide />
-          <YAxis type="category" dataKey="name" width={90} tick={{ fill: "#97cffc", fontSize: 12 }} />
+          <YAxis type="category" dataKey="name" width={90} tick={{ fill: "#3a6a94", fontSize: 12 }} />
           <Tooltip
             formatter={(value) => [`${value} min`, "Time"]}
-            contentStyle={{ background: "#1e3a5f", border: "1px solid rgba(255,255,255,0.2)", borderRadius: 12, fontSize: 12, color: "#abd9ff" }}
+            contentStyle={{ background: "#fff", border: "1px solid #b8d4ed", borderRadius: 12, fontSize: 12, color: "#2e6dc0" }}
           />
-          <Bar dataKey="minutes" fill="#abd9ff" radius={[0, 8, 8, 0]} />
+          <Bar dataKey="minutes" fill="#4a8fe7" radius={[0, 8, 8, 0]} />
         </BarChart>
       </ResponsiveContainer>
     </Section>
@@ -136,7 +136,7 @@ function BlockerChart({ data }: { data: Record<string, number> }) {
             ))}
           </Pie>
           <Tooltip
-            contentStyle={{ background: "#1e3a5f", border: "1px solid rgba(255,255,255,0.2)", borderRadius: 12, fontSize: 12, color: "#abd9ff" }}
+            contentStyle={{ background: "#fff", border: "1px solid #b8d4ed", borderRadius: 12, fontSize: 12, color: "#2e6dc0" }}
           />
         </PieChart>
       </ResponsiveContainer>
@@ -171,10 +171,10 @@ function ActivityHeatmap({ data }: { data: Record<string, number> }) {
   const maxMs = Math.max(...Object.values(data), 1);
 
   function getColor(ms: number): string {
-    if (ms === 0) return "rgba(171, 217, 255, 0.08)";
+    if (ms === 0) return "rgba(74, 143, 231, 0.1)";
     const intensity = Math.min(ms / maxMs, 1);
-    const alpha = 0.2 + intensity * 0.8;
-    return `rgba(171, 217, 255, ${alpha})`;
+    const alpha = 0.25 + intensity * 0.75;
+    return `rgba(74, 143, 231, ${alpha})`;
   }
 
   return (
@@ -197,7 +197,7 @@ function ActivityHeatmap({ data }: { data: Record<string, number> }) {
           </div>
         ))}
       </div>
-      <div className="flex items-center justify-center gap-2 mt-3 text-xs text-[#97cffc]">
+      <div className="flex items-center justify-center gap-2 mt-3 text-xs text-[#3a6a94]">
         <span>Less</span>
         {[0, 0.25, 0.5, 0.75, 1].map((intensity) => (
           <div
@@ -207,8 +207,8 @@ function ActivityHeatmap({ data }: { data: Record<string, number> }) {
               width: 10,
               height: 10,
               backgroundColor: intensity === 0
-                ? "rgba(171, 217, 255, 0.08)"
-                : `rgba(171, 217, 255, ${0.2 + intensity * 0.8})`,
+                ? "rgba(74, 143, 231, 0.1)"
+                : `rgba(74, 143, 231, ${0.25 + intensity * 0.75})`,
             }}
           />
         ))}
@@ -237,7 +237,7 @@ function JournalGallery({ tasks }: { tasks: Task[] }) {
           <div key={task.id}>
             <button
               onClick={() => setExpandedTask(expandedTask === task.id ? null : task.id)}
-              className="w-full flex items-center gap-3 text-left cursor-pointer hover:bg-white/5 rounded-xl p-2 transition-colors"
+              className="w-full flex items-center gap-3 text-left cursor-pointer hover:bg-[#4a8fe7]/10 rounded-xl p-2 transition-colors"
             >
               {task.journal[0]?.photo && (
                 <img
@@ -247,15 +247,15 @@ function JournalGallery({ tasks }: { tasks: Task[] }) {
                 />
               )}
               <div className="min-w-0 flex-1">
-                <div className="text-sm font-medium text-white truncate">{task.title}</div>
-                <div className="text-xs text-[#97cffc] flex items-center gap-2 mt-0.5">
-                  <span className="bg-[#abd9ff]/20 text-[#abd9ff] px-2 py-0.5 rounded-full text-[10px] font-medium">
+                <div className="text-sm font-medium text-[#1f3a5c] truncate">{task.title}</div>
+                <div className="text-xs text-[#5a7fa8] flex items-center gap-2 mt-0.5">
+                  <span className="bg-[#4a8fe7]/15 text-[#2e6dc0] px-2 py-0.5 rounded-full text-[10px] font-medium">
                     {task.category || "Uncategorized"}
                   </span>
                   <span>{task.journal.length} entries</span>
                 </div>
               </div>
-              <span className="text-[#97cffc] text-sm">
+              <span className="text-[#5a7fa8] text-sm">
                 {expandedTask === task.id ? "▲" : "▼"}
               </span>
             </button>
@@ -273,7 +273,7 @@ function JournalGallery({ tasks }: { tasks: Task[] }) {
                     {task.journal.map((entry: JournalEntryData, i: number) => (
                       <div
                         key={i}
-                        className="bg-blue-900/40 border border-white/10 rounded-2xl overflow-hidden"
+                        className="bg-white/50 border border-[#b8d4ed] rounded-2xl overflow-hidden"
                       >
                         {entry.photo && (
                           <img
@@ -284,15 +284,15 @@ function JournalGallery({ tasks }: { tasks: Task[] }) {
                         )}
                         <div className="p-3">
                           <div className="flex items-center gap-2 mb-2">
-                            <div className="w-5 h-5 rounded-full bg-[#abd9ff]/20 border border-[#abd9ff]/40 flex items-center justify-center shrink-0">
-                              <span className="text-[#abd9ff] text-xs font-bold">{i + 1}</span>
+                            <div className="w-5 h-5 rounded-full bg-[#4a8fe7]/20 border border-[#4a8fe7]/40 flex items-center justify-center shrink-0">
+                              <span className="text-[#2e6dc0] text-xs font-bold">{i + 1}</span>
                             </div>
-                            <p className="text-[#97cffc] text-xs truncate">{entry.stepText}</p>
+                            <p className="text-[#3a6a94] text-xs truncate">{entry.stepText}</p>
                           </div>
                           {entry.reflection && (
-                            <p className="text-[#abd9ff] text-xs leading-relaxed italic">{entry.reflection}</p>
+                            <p className="text-[#2e6dc0] text-xs leading-relaxed italic">{entry.reflection}</p>
                           )}
-                          <p className="text-[#758af5] text-xs mt-2">
+                          <p className="text-[#5a7fa8] text-xs mt-2">
                             {new Date(entry.completedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                           </p>
                         </div>
@@ -326,12 +326,12 @@ function RecentSessions({ tasks }: { tasks: Task[] }) {
         {recent.map((task) => (
           <div
             key={task.id}
-            className="flex items-center justify-between bg-blue-900/40 rounded-xl px-4 py-3 border border-white/10"
+            className="flex items-center justify-between bg-white/50 rounded-xl px-4 py-3 border border-[#b8d4ed]"
           >
             <div className="min-w-0 flex-1">
-              <div className="text-sm font-medium text-white truncate">{task.title}</div>
-              <div className="text-xs text-[#97cffc] flex items-center gap-2 mt-0.5">
-                <span className="bg-[#abd9ff]/20 text-[#abd9ff] px-2 py-0.5 rounded-full text-[10px] font-medium">
+              <div className="text-sm font-medium text-[#1f3a5c] truncate">{task.title}</div>
+              <div className="text-xs text-[#5a7fa8] flex items-center gap-2 mt-0.5">
+                <span className="bg-[#4a8fe7]/15 text-[#2e6dc0] px-2 py-0.5 rounded-full text-[10px] font-medium">
                   {task.category || "Uncategorized"}
                 </span>
                 <span>{task.steps.length} steps</span>
@@ -343,7 +343,7 @@ function RecentSessions({ tasks }: { tasks: Task[] }) {
                 )}
               </div>
             </div>
-            <div className="text-xs text-[#758af5] ml-3 whitespace-nowrap">
+            <div className="text-xs text-[#5a7fa8] ml-3 whitespace-nowrap">
               {task.completedAt ? new Date(task.completedAt).toLocaleDateString() : ""}
             </div>
           </div>
@@ -359,9 +359,9 @@ function Section({ title, children }: { title: string; children: React.ReactNode
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-blue-900/40 backdrop-blur rounded-2xl p-5 border border-white/20"
+      className="bg-white/60 backdrop-blur rounded-2xl p-5 border border-[#b8d4ed]"
     >
-      <h3 className="text-sm font-semibold text-[#abd9ff] mb-4">{title}</h3>
+      <h3 className="text-sm font-semibold text-[#2e6dc0] mb-4">{title}</h3>
       {children}
     </motion.div>
   );
@@ -369,8 +369,8 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 function EmptyState({ message }: { message: string }) {
   return (
-    <div className="bg-blue-900/40 backdrop-blur rounded-2xl p-8 border border-white/20 text-center">
-      <p className="text-sm text-[#97cffc]">{message}</p>
+    <div className="bg-white/60 backdrop-blur rounded-2xl p-8 border border-[#b8d4ed] text-center">
+      <p className="text-sm text-[#5a7fa8]">{message}</p>
     </div>
   );
 }
@@ -396,7 +396,7 @@ export default function Analytics() {
   return (
     <div className="w-full max-w-lg mx-auto space-y-4">
       <motion.h2
-        className="text-2xl font-bold text-center text-[#abd9ff]"
+        className="text-2xl font-bold text-center text-[#2e6dc0]"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
       >

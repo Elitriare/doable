@@ -146,8 +146,8 @@ export default function Home() {
             onClick={() => setActiveTab("coach")}
             className={`px-6 py-2 rounded-full text-sm font-semibold transition-all cursor-pointer ${
               activeTab === "coach"
-                ? "bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white"
-                : "bg-white/20 text-gray-500 hover:bg-white/40"
+                ? "bg-[#4a8fe7] text-white shadow-md"
+                : "bg-white/50 text-[#5a7fa8] hover:bg-white/70"
             }`}
           >
             Coach
@@ -156,8 +156,8 @@ export default function Home() {
             onClick={() => setActiveTab("analytics")}
             className={`px-6 py-2 rounded-full text-sm font-semibold transition-all cursor-pointer ${
               activeTab === "analytics"
-                ? "bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white"
-                : "bg-white/20 text-gray-500 hover:bg-white/40"
+                ? "bg-[#4a8fe7] text-white shadow-md"
+                : "bg-white/50 text-[#5a7fa8] hover:bg-white/70"
             }`}
           >
             Analytics
