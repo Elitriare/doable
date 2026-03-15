@@ -29,17 +29,25 @@ export default function Leaderboard() {
   const fetchLeaderboard = async () => {
     try {
       const res = await fetch("/api/friends");
-      if (!res.ok) return;
+      if (!res.ok) {
+        setLoading(false);
+        return;
+      }
       const data = await res.json();
       setLeaderboard(data.leaderboard || []);
       setFriendCode(data.friendCode || "");
       setPointsHistory((data.pointsHistory || []).reverse());
-    } catch {}
+    } catch {
+      // silently fail
+    }
     setLoading(false);
   };
 
   useEffect(() => {
-    if (!session) return;
+    if (!session) {
+      setLoading(false);
+      return;
+    }
     fetchLeaderboard();
   }, [session]);
 
@@ -86,6 +94,7 @@ export default function Leaderboard() {
   };
 
   const myPoints = leaderboard.find((e) => e.isYou)?.points ?? localPoints;
+  const hasFriends = leaderboard.filter((e) => !e.isYou).length > 0;
 
   return (
     <div className="w-full max-w-lg mx-auto space-y-6">
@@ -105,21 +114,28 @@ export default function Leaderboard() {
           </div>
         </div>
 
-        {/* Friend Code */}
-        {friendCode && (
-          <div className="mt-4 bg-white/15 rounded-xl px-4 py-2 flex items-center justify-between">
-            <div className="text-left">
-              <p className="text-xs text-white/70">Your friend code</p>
+        {/* Friend Code — always show the section, loading state if needed */}
+        <div className="mt-4 bg-white/15 rounded-xl px-4 py-3 flex items-center justify-between">
+          <div className="text-left">
+            <p className="text-xs text-white/70">Your friend code</p>
+            {friendCode ? (
               <p className="text-lg font-mono font-bold tracking-widest">{friendCode}</p>
-            </div>
+            ) : loading ? (
+              <p className="text-sm text-white/50">Loading...</p>
+            ) : (
+              <p className="text-sm text-white/50">Unavailable</p>
+            )}
+          </div>
+          {friendCode && (
             <button
               onClick={handleCopy}
               className="text-xs px-3 py-1.5 rounded-lg bg-white/20 hover:bg-white/30 transition-all cursor-pointer font-medium"
             >
               {copied ? "Copied!" : "Copy"}
             </button>
-          </div>
-        )}
+          )}
+        </div>
+        <p className="text-xs text-white/60 mt-2">Share this code with friends to compete</p>
       </div>
 
       {/* Add Friend */}
@@ -159,9 +175,11 @@ export default function Leaderboard() {
           <div className="flex items-center justify-center py-8">
             <div className="w-6 h-6 border-2 border-[#4a8fe7] border-t-transparent rounded-full animate-spin" />
           </div>
-        ) : leaderboard.length === 0 ? (
-          <div className="py-8 text-center text-sm text-[#5a7fa8]">
-            Add friends to start competing!
+        ) : !hasFriends ? (
+          <div className="py-8 text-center">
+            <p className="text-2xl mb-2">👋</p>
+            <p className="text-sm text-[#5a7fa8] font-medium">Add friends to compete with!</p>
+            <p className="text-xs text-[#5a7fa8] mt-1">Share your code and enter theirs above</p>
           </div>
         ) : (
           <div className="divide-y divide-[#b8d4ed]/50">
